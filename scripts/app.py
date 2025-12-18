@@ -13,6 +13,14 @@ import dash
 from bad_therapist_main import NarcissistTherapist
 from dash.exceptions import PreventUpdate
 import random
+import re
+from collections import Counter
+import base64
+from io import BytesIO
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
 
 # --- GLOBAL INITIALIZATION ---
 GLOBAL_SESSION_MANAGER = None
@@ -46,6 +54,123 @@ PLACEHOLDER_IMAGES = [
 def get_random_image():
     """Returns a random image from the placeholder images list."""
     return random.choice(PLACEHOLDER_IMAGES)
+
+# --- NLP ANALYSIS FUNCTIONS ---
+def extract_text_from_sessions(past_sessions):
+    """Extract all user questions and therapist responses from past sessions."""
+    all_questions = []
+    all_responses = []
+    all_text = []
+    
+    for session in past_sessions:
+        history = session.get("history", [])
+        for msg in history:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            if role == "user":
+                all_questions.append(content)
+                all_text.append(content)
+            elif role == "assistant":
+                all_responses.append(content)
+                all_text.append(content)
+    
+    return all_questions, all_responses, all_text
+
+def clean_text(text_list):
+    """Clean and tokenize text for analysis."""
+    all_text = " ".join(text_list).lower()
+    # Remove punctuation and split into words
+    words = re.findall(r'\b[a-z]{3,}\b', all_text)  # Words with 3+ letters
+    return words
+
+def generate_wordcloud_image(text_list, title="Word Cloud"):
+    """Generate a word cloud image from text list."""
+    if not text_list:
+        return None
+    
+    text = " ".join(text_list)
+    if not text.strip():
+        return None
+    
+    # Generate word cloud
+    wordcloud = WordCloud(
+        width=800,
+        height=400,
+        background_color='white',
+        colormap='viridis',
+        max_words=100,
+        relative_scaling=0.5
+    ).generate(text)
+    
+    # Create matplotlib figure
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.imshow(wordcloud, interpolation='bilinear')
+    ax.axis('off')
+    ax.set_title(title, fontsize=16, pad=20)
+    
+    # Convert to base64 image
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=100)
+    img_buffer.seek(0)
+    img_str = base64.b64encode(img_buffer.read()).decode()
+    plt.close(fig)
+    
+    return f"data:image/png;base64,{img_str}"
+
+def generate_nlp_analysis(past_sessions):
+    """Generate comprehensive NLP analysis of past sessions."""
+    if not past_sessions:
+        return None
+    
+    questions, responses, all_text = extract_text_from_sessions(past_sessions)
+    
+    if not all_text:
+        return None
+    
+    analysis = {}
+    
+    # 1. Word Cloud
+    analysis['questions_wc'] = generate_wordcloud_image(questions, "Patient Questions Word Cloud")
+    analysis['responses_wc'] = generate_wordcloud_image(responses, "Dr. Vain's Responses Word Cloud")
+    analysis['combined_wc'] = generate_wordcloud_image(all_text, "Combined Conversation Word Cloud")
+    
+    # 2. Most common words/phrases
+    question_words = clean_text(questions)
+    response_words = clean_text(responses)
+    
+    analysis['top_question_words'] = Counter(question_words).most_common(20)
+    analysis['top_response_words'] = Counter(response_words).most_common(20)
+    
+    # 3. Basic statistics
+    analysis['num_sessions'] = len(past_sessions)
+    analysis['total_messages'] = len(all_text)
+    analysis['total_questions'] = len(questions)
+    analysis['total_responses'] = len(responses)
+    analysis['avg_question_length'] = np.mean([len(q.split()) for q in questions]) if questions else 0
+    analysis['avg_response_length'] = np.mean([len(r.split()) for r in responses]) if responses else 0
+    
+    # 4. Summary - extract key themes from questions
+    question_text = " ".join(questions).lower()
+    common_question_words = [word for word, count in analysis['top_question_words'][:10]]
+    analysis['key_themes'] = ", ".join(common_question_words[:5])
+    
+    # 5. Generate text summary
+    analysis['summary'] = f"""
+    Analysis of {analysis['num_sessions']} past therapy sessions:
+    
+    • Total messages exchanged: {analysis['total_messages']}
+    • Patient questions: {analysis['total_questions']}
+    • Dr. Vain's responses: {analysis['total_responses']}
+    • Average question length: {analysis['avg_question_length']:.1f} words
+    • Average response length: {analysis['avg_response_length']:.1f} words
+    
+    Key themes discussed: {analysis['key_themes']}
+    
+    Most frequent question words: {', '.join([word for word, _ in analysis['top_question_words'][:5]])}
+    Most frequent response words: {', '.join([word for word, _ in analysis['top_response_words'][:5]])}
+    """
+    
+    return analysis
 
 def get_snarky_ending_message():
     """Returns a snarky ending message in character with Dr. Vain."""
@@ -135,13 +260,13 @@ app.layout = html.Div([
                     html.H1(dcc.Markdown('**Welcome to Dr. Vain\'s Office!**')),
                     html.Br(),
                     html.P(dcc.Markdown('**What should you know about Dr. Vain?**'), style={'text-decoration': 'underline','color':'white'}),
-                    html.P("Point 1", style={'color':'white'}),
+                    html.P("Dr. Vain is a RAG (Retrieval-Augmented Generation) chatbot that has been trained to answer mental health questions while adopting the persona of a narcissistic therapist. He uses artificial intelligence to generate responses that reflect the characteristics of an egotistical and self-absorbed therapist.", style={'color':'white'}),
                     html.Br(),
                     html.P(dcc.Markdown('**How does Dr. Vain operate?**'), style={'text-decoration': 'underline','color':'white'}),
-                    html.P('RAG', style={'color':'white'}),
+                    html.P("Dr. Vain uses a RAG (Retrieval-Augmented Generation) system to answer your questions. When you ask a question, he first searches a vector database (Pinecone) to retrieve relevant context from his knowledge base. This retrieved information is then combined with your question and sent to Ollama's gemma3:latest language model, which generates his narcissistic responses. Throughout your session, Dr. Vain maintains a conversation history, allowing him to remember and reference details from earlier in your conversation.", style={'color':'white'}),
                     html.Br(),
-                    html.P(dcc.Markdown('**Does Dr. Vain have any limitations**'), style={'text-decoration': 'underline','color':'white'}),
-                    html.P("No", style={'color':'white'})
+                    html.P(dcc.Markdown('**Does Dr. Vain have any limitations?**'), style={'text-decoration': 'underline','color':'white'}),
+                    html.P("Dr. Vain has several limitations. The responses are generated by Ollama's gemma3:latest model, which may occasionally produce inconsistent, repetitive, or contextually inappropriate answers. The model's knowledge is limited to its training data and the information in the Pinecone database. Additionally, it's important to note that Dr. Vain is intentionally designed to provide bad therapeutic advice as part of his narcissistic character - he is not a real therapist and should not be used for actual mental health guidance.", style={'color':'white'})
                 ])
             ]
         ),
@@ -317,7 +442,32 @@ app.layout = html.Div([
         ),
 
         # --- Tab 4: Summary ---
-        dcc.Tab(label='Summary', value='tab-4', style=tab_style, selected_style=tab_selected_style, children=[])
+        dcc.Tab(
+            label='Summary', 
+            value='tab-4', 
+            style=tab_style, 
+            selected_style=tab_selected_style,
+            children=[
+                dbc.Container([
+                    dbc.Row([
+                        dbc.Col([
+                            html.H2("Patient Diagnosis Report", style={"marginBottom": "20px", "color": "#fff"}),
+                            html.P("Generate a comprehensive analysis report based on the past 5 therapy sessions with Dr. Vain.", 
+                                  style={"color": "#ccc", "marginBottom": "30px"}),
+                            dbc.Button(
+                                "Generate Report",
+                                id="generate-report-btn",
+                                color="primary",
+                                size="lg",
+                                n_clicks=0,
+                                className="mb-4"
+                            ),
+                            html.Div(id="report-content", style={"marginTop": "30px"})
+                        ], width=12)
+                    ])
+                ], fluid=True, style={"padding": "40px", "maxWidth": "1200px"})
+            ]
+        )
     ])
 ])
 print("App layout built successfully")
@@ -550,6 +700,116 @@ app.clientside_callback(
     Input("music-playing", "data"),
     prevent_initial_call=True
 )
+
+# Callback to generate diagnosis report
+@app.callback(
+    Output("report-content", "children"),
+    Input("generate-report-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def generate_report(n_clicks):
+    """Generate NLP analysis report from past sessions."""
+    if not n_clicks or n_clicks == 0:
+        raise PreventUpdate
+    
+    try:
+        session_mgr = get_session_manager()
+        past_sessions = session_mgr.get_past_session_history()
+        
+        if not past_sessions:
+            return dbc.Alert(
+                "No past sessions found. Please complete at least one session with Dr. Vain to generate a report.",
+                color="warning"
+            )
+        
+        # Generate NLP analysis
+        analysis = generate_nlp_analysis(past_sessions)
+        
+        if not analysis:
+            return dbc.Alert("Unable to generate analysis. No sufficient data found.", color="danger")
+        
+        # Build report layout
+        report_elements = [
+            html.H3("📊 Patient Diagnosis Report", style={"color": "#fff", "marginBottom": "30px"}),
+            html.Hr(style={"borderColor": "#444"}),
+            
+            # Summary section
+            html.H4("Executive Summary", style={"color": "#fff", "marginTop": "20px", "marginBottom": "15px"}),
+            html.Pre(
+                analysis['summary'].strip(),
+                style={
+                    "backgroundColor": "#1a1a1a",
+                    "color": "#00ff00",
+                    "padding": "15px",
+                    "borderRadius": "5px",
+                    "fontFamily": "monospace",
+                    "whiteSpace": "pre-wrap",
+                    "border": "1px solid #444"
+                }
+            ),
+            
+            html.Hr(style={"borderColor": "#444", "marginTop": "30px"}),
+            
+            # Word Clouds
+            html.H4("Visual Analysis - Word Clouds", style={"color": "#fff", "marginTop": "20px", "marginBottom": "15px"}),
+            dbc.Row([
+                dbc.Col([
+                    html.H5("Patient Questions", style={"color": "#ccc", "textAlign": "center"}),
+                    html.Img(
+                        src=analysis['questions_wc'] if analysis['questions_wc'] else "",
+                        style={"width": "100%", "borderRadius": "5px"}
+                    ) if analysis['questions_wc'] else html.P("No data available", style={"color": "#888"})
+                ], md=6, className="mb-4"),
+                dbc.Col([
+                    html.H5("Dr. Vain's Responses", style={"color": "#ccc", "textAlign": "center"}),
+                    html.Img(
+                        src=analysis['responses_wc'] if analysis['responses_wc'] else "",
+                        style={"width": "100%", "borderRadius": "5px"}
+                    ) if analysis['responses_wc'] else html.P("No data available", style={"color": "#888"})
+                ], md=6, className="mb-4")
+            ], className="mb-4"),
+            
+            dbc.Row([
+                dbc.Col([
+                    html.H5("Combined Conversation", style={"color": "#ccc", "textAlign": "center"}),
+                    html.Img(
+                        src=analysis['combined_wc'] if analysis['combined_wc'] else "",
+                        style={"width": "100%", "borderRadius": "5px"}
+                    ) if analysis['combined_wc'] else html.P("No data available", style={"color": "#888"})
+                ], md=12, className="mb-4")
+            ]),
+            
+            html.Hr(style={"borderColor": "#444", "marginTop": "30px"}),
+            
+            # Word frequency analysis
+            html.H4("Word Frequency Analysis", style={"color": "#fff", "marginTop": "20px", "marginBottom": "15px"}),
+            dbc.Row([
+                dbc.Col([
+                    html.H5("Top Words in Patient Questions", style={"color": "#ccc", "marginBottom": "10px"}),
+                    html.Ul([
+                        html.Li(f"{word} ({count})", style={"color": "#00ffff", "marginBottom": "5px"})
+                        for word, count in analysis['top_question_words'][:10]
+                    ], style={"listStyle": "none", "paddingLeft": "0"})
+                ], md=6),
+                dbc.Col([
+                    html.H5("Top Words in Dr. Vain's Responses", style={"color": "#ccc", "marginBottom": "10px"}),
+                    html.Ul([
+                        html.Li(f"{word} ({count})", style={"color": "#ffff00", "marginBottom": "5px"})
+                        for word, count in analysis['top_response_words'][:10]
+                    ], style={"listStyle": "none", "paddingLeft": "0"})
+                ], md=6)
+            ], className="mb-4")
+        ]
+        
+        return html.Div(report_elements)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return dbc.Alert(
+            f"Error generating report: {str(e)}",
+            color="danger"
+        )
 
 print("Callbacks set up successfully")
 
