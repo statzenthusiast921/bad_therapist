@@ -15,12 +15,12 @@ from dash.exceptions import PreventUpdate
 import random
 import re
 from collections import Counter
-import base64
-from io import BytesIO
-import matplotlib
-matplotlib.use('Agg')  # Use non-interactive backend
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+import warnings
+warnings.filterwarnings('ignore')
+import ollama
+from diagnosis_prompts import DIAGNOSIS_SYSTEM_PROMPT, format_conversation_history, generate_diagnosis_user_prompt
 
 # --- GLOBAL INITIALIZATION ---
 GLOBAL_SESSION_MANAGER = None
@@ -56,17 +56,49 @@ def get_random_image():
     return random.choice(PLACEHOLDER_IMAGES)
 
 # --- NLP ANALYSIS FUNCTIONS ---
-def extract_text_from_sessions(past_sessions):
+def extract_text_from_sessions(past_sessions, exclude_welcome_goodbye=False):
     """Extract all user questions and therapist responses from past sessions."""
     all_questions = []
     all_responses = []
     all_text = []
     
+    # Welcome message text
+    welcome_message = "Welcome. Before we begin, I want to acknowledge how fortunate you are to be here."
+    
+    # Goodbye message texts (from get_snarky_ending_message)
+    goodbye_messages = [
+        "Well, I'm certain this has been tremendously enlightening for you. As always, the privilege of receiving my insights is immeasurable. I trust you'll carry the weight of our session with the appropriate reverence.",
+        "It's been... adequate. I suppose not everyone can appreciate the caliber of therapy I provide, but I've done my part. Do remember that greatness like mine is rarely understood on the first encounter.",
+        "I must say, while our time together may have seemed brief to you, it's quite natural that you'd need time to fully process the profundity of what I've shared. Most clients find themselves reflecting on my words for weeks.",
+        "As we conclude, I want you to know that despite the limitations you've brought to our session, I've done what I can. It's rather unfortunate that you couldn't fully appreciate the therapeutic excellence you've been given.",
+        "Well, I've given you everything you need. Though I suspect it will take considerable reflection on your part to truly grasp the magnitude of what we've accomplished here. I've been extraordinary, as always.",
+        "I trust you've taken notes. Our session may be ending, but the wisdom I've imparted today will resonate far beyond this moment. I'm confident you'll realize how fortunate you were to have this time with me."
+    ]
+    
     for session in past_sessions:
         history = session.get("history", [])
-        for msg in history:
+        
+        # Find the first assistant message (welcome) and last assistant message (goodbye)
+        first_assistant_idx = None
+        last_assistant_idx = None
+        for idx, msg in enumerate(history):
+            if msg.get("role") == "assistant":
+                if first_assistant_idx is None:
+                    first_assistant_idx = idx
+                last_assistant_idx = idx
+        
+        for msg_idx, msg in enumerate(history):
             role = msg.get("role", "")
-            content = msg.get("content", "")
+            content = msg.get("content", "").strip()
+            
+            # Skip welcome message (first assistant message that matches welcome text)
+            if exclude_welcome_goodbye and role == "assistant":
+                if msg_idx == first_assistant_idx and content == welcome_message:
+                    continue
+                # Skip goodbye messages (last assistant message that matches any goodbye text)
+                if msg_idx == last_assistant_idx and any(content == goodbye_msg.strip() for goodbye_msg in goodbye_messages):
+                    continue
+            
             if role == "user":
                 all_questions.append(content)
                 all_text.append(content)
@@ -83,60 +115,78 @@ def clean_text(text_list):
     words = re.findall(r'\b[a-z]{3,}\b', all_text)  # Words with 3+ letters
     return words
 
-def generate_wordcloud_image(text_list, title="Word Cloud"):
-    """Generate a word cloud image from text list."""
-    if not text_list:
-        return None
+def extract_topics_lda(text_list, n_topics=3, n_words=5):
+    """Extract topics using Latent Dirichlet Allocation."""
+    if not text_list or len(text_list) < 2:
+        return []
     
-    text = " ".join(text_list)
-    if not text.strip():
-        return None
+    # Prepare documents (each message is a document)
+    documents = [text.lower() for text in text_list if text.strip()]
     
-    # Generate word cloud
-    wordcloud = WordCloud(
-        width=800,
-        height=400,
-        background_color='white',
-        colormap='viridis',
-        max_words=100,
-        relative_scaling=0.5
-    ).generate(text)
+    if len(documents) < 2:
+        return []
     
-    # Create matplotlib figure
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.imshow(wordcloud, interpolation='bilinear')
-    ax.axis('off')
-    ax.set_title(title, fontsize=16, pad=20)
-    
-    # Convert to base64 image
-    img_buffer = BytesIO()
-    plt.savefig(img_buffer, format='png', bbox_inches='tight', dpi=100)
-    img_buffer.seek(0)
-    img_str = base64.b64encode(img_buffer.read()).decode()
-    plt.close(fig)
-    
-    return f"data:image/png;base64,{img_str}"
+    try:
+        # Create document-term matrix
+        vectorizer = CountVectorizer(
+            max_features=100,
+            stop_words='english',
+            min_df=2,
+            max_df=0.95,
+            ngram_range=(1, 2)  # Include unigrams and bigrams
+        )
+        doc_term_matrix = vectorizer.fit_transform(documents)
+        
+        # Adjust number of topics based on available documents
+        n_topics = min(n_topics, len(documents) - 1, 5)
+        if n_topics < 1:
+            return []
+        
+        # Apply LDA
+        lda = LatentDirichletAllocation(
+            n_components=n_topics,
+            random_state=42,
+            max_iter=10
+        )
+        lda.fit(doc_term_matrix)
+        
+        # Extract top words for each topic
+        feature_names = vectorizer.get_feature_names_out()
+        topics = []
+        
+        for topic_idx, topic in enumerate(lda.components_):
+            top_words_idx = topic.argsort()[-n_words:][::-1]
+            top_words = [feature_names[i] for i in top_words_idx]
+            topics.append({
+                'topic_num': topic_idx + 1,
+                'words': top_words,
+                'theme': ', '.join(top_words[:3])  # Use top 3 words as theme name
+            })
+        
+        return topics
+    except Exception as e:
+        print(f"Error in topic modeling: {e}")
+        return []
 
 def generate_nlp_analysis(past_sessions):
     """Generate comprehensive NLP analysis of past sessions."""
     if not past_sessions:
         return None
     
-    questions, responses, all_text = extract_text_from_sessions(past_sessions)
+    # Extract text excluding welcome/goodbye messages for statistics
+    questions, responses, all_text = extract_text_from_sessions(past_sessions, exclude_welcome_goodbye=True)
     
-    if not all_text:
+    # Extract text including all messages for word clouds and analysis
+    questions_all, responses_all, all_text_all = extract_text_from_sessions(past_sessions, exclude_welcome_goodbye=False)
+    
+    if not all_text_all:
         return None
     
     analysis = {}
     
-    # 1. Word Cloud
-    analysis['questions_wc'] = generate_wordcloud_image(questions, "Patient Questions Word Cloud")
-    analysis['responses_wc'] = generate_wordcloud_image(responses, "Dr. Vain's Responses Word Cloud")
-    analysis['combined_wc'] = generate_wordcloud_image(all_text, "Combined Conversation Word Cloud")
-    
-    # 2. Most common words/phrases
-    question_words = clean_text(questions)
-    response_words = clean_text(responses)
+    # Most common words/phrases (use all messages for analysis)
+    question_words = clean_text(questions_all)
+    response_words = clean_text(responses_all)
     
     analysis['top_question_words'] = Counter(question_words).most_common(20)
     analysis['top_response_words'] = Counter(response_words).most_common(20)
@@ -146,31 +196,37 @@ def generate_nlp_analysis(past_sessions):
     analysis['total_messages'] = len(all_text)
     analysis['total_questions'] = len(questions)
     analysis['total_responses'] = len(responses)
-    analysis['avg_question_length'] = np.mean([len(q.split()) for q in questions]) if questions else 0
-    analysis['avg_response_length'] = np.mean([len(r.split()) for r in responses]) if responses else 0
     
-    # 4. Summary - extract key themes from questions
-    question_text = " ".join(questions).lower()
-    common_question_words = [word for word, count in analysis['top_question_words'][:10]]
-    analysis['key_themes'] = ", ".join(common_question_words[:5])
-    
-    # 5. Generate text summary
-    analysis['summary'] = f"""
-    Analysis of {analysis['num_sessions']} past therapy sessions:
-    
-    • Total messages exchanged: {analysis['total_messages']}
-    • Patient questions: {analysis['total_questions']}
-    • Dr. Vain's responses: {analysis['total_responses']}
-    • Average question length: {analysis['avg_question_length']:.1f} words
-    • Average response length: {analysis['avg_response_length']:.1f} words
-    
-    Key themes discussed: {analysis['key_themes']}
-    
-    Most frequent question words: {', '.join([word for word, _ in analysis['top_question_words'][:5]])}
-    Most frequent response words: {', '.join([word for word, _ in analysis['top_response_words'][:5]])}
-    """
+    # 4. Generate Ollama-based diagnosis
+    analysis['ollama_diagnosis'] = generate_ollama_diagnosis(past_sessions)
     
     return analysis
+
+def generate_ollama_diagnosis(past_sessions):
+    """Generate a diagnosis in Dr. Vain's voice using Ollama's gemma3:latest model."""
+    if not past_sessions:
+        return None
+    
+    # Format conversation history and generate prompts using external module
+    conversation_text = format_conversation_history(past_sessions)
+    user_prompt = generate_diagnosis_user_prompt(conversation_text)
+    
+    try:
+        # Call Ollama
+        messages = [
+            {"role": "system", "content": DIAGNOSIS_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt}
+        ]
+        
+        response = ollama.chat(model="gemma3:latest", messages=messages)
+        diagnosis = response["message"]["content"]
+        
+        return diagnosis
+    except Exception as e:
+        print(f"Error generating Ollama diagnosis: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
 def get_snarky_ending_message():
     """Returns a snarky ending message in character with Dr. Vain."""
@@ -218,7 +274,7 @@ tab_selected_style = {'borderTop': '1px solid #d6d6d6', 'borderBottom': '1px sol
 
 # --- DASH APP ---
 print("Creating Dash app...")
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], assets_folder=os.path.join(os.curdir,"assets"))
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], assets_folder=os.path.join(os.curdir,"assets"), suppress_callback_exceptions=True)
 server = app.server
 print("Dash app created successfully")
 
@@ -361,83 +417,79 @@ app.layout = html.Div([
                     preload="auto",
                     style={"display": "none"}
                 ),
-                dbc.Container([
-                    # Session control buttons at the top
-                    dbc.Row([
-                        dbc.Col([
-                            html.Div([
-                                dbc.Button("Start New Session", id="new-session-btn", color="danger", n_clicks=0, className="me-2", size="md"),
-                                dbc.Button("End Session", id="end-session-btn", color="primary", n_clicks=0, size="md", className="me-2"),
-                                dbc.Button("⏸️ Pause Music", id="pause-music-btn", color="secondary", n_clicks=0, size="md", outline=True)
-                            ], className="text-center")
-                        ], width=12)
-                    ], className="mb-4"),
-                    
-                    # Main content area: Chat log and image side by side
-                    dbc.Row([
-                        # Left side: Chat log
-                        dbc.Col([
-                            html.H5("Conversation", style={"marginBottom": "10px", "color": "#fff", "fontWeight": "bold"}),
-                            dcc.Loading(
-                                id="loading-session",
-                                type="default",
-                                children=html.Div(id="chat-log", style={
-                    "backgroundColor": "#000000",
-                    "color": "#00ff00",
-                                    "padding": "15px",
-                                    "height": "450px",
-                    "overflowY": "auto",
-                    "fontFamily": "monospace",
-                                    "border": "2px solid #444",
-                                    "borderRadius": "5px",
-                                    "boxShadow": "0 2px 4px rgba(0,0,0,0.3)"
-                                })
-                            )
-                        ], md=6, className="pe-2"),
-                        
-                        # Right side: Rotating image
-                        dbc.Col([
-                            html.H5("Dr. Vain's Office", style={"marginBottom": "10px", "color": "#fff", "fontWeight": "bold"}),
-                            html.Div([
-                                html.Img(id="rotating-image", src=PLACEHOLDER_IMAGES[0], alt="Dr. Vain", 
-                                        style={
-                                            "width": "100%",
-                                            "height": "450px",
-                                            "objectFit": "cover",
-                                            "border": "2px solid #444",
-                                            "backgroundColor": "#222",
-                                            "opacity": "1",
-                                            "transform": "scale(1)",
-                                            "transition": "opacity 0.6s ease-in-out, transform 0.6s ease-in-out",
-                                            "borderRadius": "5px",
-                                            "boxShadow": "0 2px 4px rgba(0,0,0,0.3)"
-                                        })
-                            ], id="image-container", style={
-                                "width": "100%", 
-                                "height": "450px", 
-                                "overflow": "hidden", 
-                                "position": "relative"
+                # Session control buttons at the top
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Button("Start New Session", id="new-session-btn", color="danger", n_clicks=0, className="me-2", size="md"),
+                        dbc.Button("End Session", id="end-session-btn", color="primary", n_clicks=0, size="md", className="me-2"),
+                        dbc.Button("⏸️ Pause Music", id="pause-music-btn", color="secondary", n_clicks=0, size="md", outline=True)
+                    ], width=12, className="text-center")
+                ], className="mb-4"),
+                
+                # Main content area: Chat log and image side by side
+                dbc.Row([
+                    # Left side: Chat log
+                    dbc.Col([
+                        html.H5("Conversation", style={"marginBottom": "10px", "color": "#fff", "fontWeight": "bold"}),
+                        dcc.Loading(
+                            id="loading-session",
+                            type="default",
+                            children=html.Div(id="chat-log", style={
+                                "backgroundColor": "#000000",
+                                "color": "#00ff00",
+                                "padding": "15px",
+                                "height": "450px",
+                                "overflowY": "auto",
+                                "fontFamily": "monospace",
+                                "border": "2px solid #444",
+                                "borderRadius": "5px",
+                                "boxShadow": "0 2px 4px rgba(0,0,0,0.3)"
                             })
-                        ], md=6, className="ps-2")
-                    ], className="mb-4"),
+                        )
+                    ], md=6, className="pe-2"),
                     
-                    # Input area at the bottom
-                    dbc.Row([
-                        dbc.Col([
-                            dbc.InputGroup([
-                                dbc.Input(
-                                    id="user-input", 
-                                    placeholder="Type your message to Dr. Vain...", 
-                                    type="text",
-                                    debounce=False, 
-                                    n_submit=0,
-                                    size="lg"
-                                ),
-                                dbc.Button("Submit", id="submit-btn", color="success", n_clicks=0, size="lg")
-                            ])
-                        ], width={"size": 10, "offset": 1}, className="mt-3")
-                    ])
-                ], fluid=True, style={"padding": "20px", "maxWidth": "1400px"})
+                    # Right side: Rotating image
+                    dbc.Col([
+                        html.H5("Dr. Vain's Office", style={"marginBottom": "10px", "color": "#fff", "fontWeight": "bold"}),
+                        html.Div([
+                            html.Img(id="rotating-image", src=PLACEHOLDER_IMAGES[0], alt="Dr. Vain", 
+                                    style={
+                                        "width": "100%",
+                                        "height": "450px",
+                                        "objectFit": "cover",
+                                        "border": "2px solid #444",
+                                        "backgroundColor": "#222",
+                                        "opacity": "1",
+                                        "transform": "scale(1)",
+                                        "transition": "opacity 0.6s ease-in-out, transform 0.6s ease-in-out",
+                                        "borderRadius": "5px",
+                                        "boxShadow": "0 2px 4px rgba(0,0,0,0.3)"
+                                    })
+                        ], id="image-container", style={
+                            "width": "100%", 
+                            "height": "450px", 
+                            "overflow": "hidden", 
+                            "position": "relative"
+                        })
+                    ], md=6, className="ps-2")
+                ], className="mb-4"),
+                
+                # Input area at the bottom
+                dbc.Row([
+                    dbc.Col([
+                        dbc.InputGroup([
+                            dbc.Input(
+                                id="user-input", 
+                                placeholder="Type your message to Dr. Vain...", 
+                                type="text",
+                                debounce=False, 
+                                n_submit=0,
+                                size="lg"
+                            ),
+                            dbc.Button("Submit", id="submit-btn", color="success", n_clicks=0, size="lg")
+                        ])
+                    ], width={"size": 10, "offset": 1}, className="mt-3")
+                ])
             ]
         ),
 
@@ -448,24 +500,22 @@ app.layout = html.Div([
             style=tab_style, 
             selected_style=tab_selected_style,
             children=[
-                dbc.Container([
-                    dbc.Row([
-                        dbc.Col([
-                            html.H2("Patient Diagnosis Report", style={"marginBottom": "20px", "color": "#fff"}),
-                            html.P("Generate a comprehensive analysis report based on the past 5 therapy sessions with Dr. Vain.", 
-                                  style={"color": "#ccc", "marginBottom": "30px"}),
-                            dbc.Button(
-                                "Generate Report",
-                                id="generate-report-btn",
-                                color="primary",
-                                size="lg",
-                                n_clicks=0,
-                                className="mb-4"
-                            ),
-                            html.Div(id="report-content", style={"marginTop": "30px"})
-                        ], width=12)
-                    ])
-                ], fluid=True, style={"padding": "40px", "maxWidth": "1200px"})
+                dbc.Row([
+                    dbc.Col([
+                        html.H2("Patient Diagnosis Report", style={"marginBottom": "20px", "color": "#fff"}),
+                        html.P("Generate a comprehensive analysis report based on the past 5 therapy sessions with Dr. Vain.", 
+                              style={"color": "#ccc", "marginBottom": "30px"}),
+                        dbc.Button(
+                            "Generate Report",
+                            id="generate-report-btn",
+                            color="primary",
+                            size="lg",
+                            n_clicks=0,
+                            className="mb-4"
+                        ),
+                        html.Div(id="report-content", style={"marginTop": "30px"})
+                    ], width=12)
+                ], className="p-5", style={"maxWidth": "1200px", "margin": "0 auto"})
             ]
         )
     ])
@@ -733,72 +783,22 @@ def generate_report(n_clicks):
             html.H3("📊 Patient Diagnosis Report", style={"color": "#fff", "marginBottom": "30px"}),
             html.Hr(style={"borderColor": "#444"}),
             
-            # Summary section
-            html.H4("Executive Summary", style={"color": "#fff", "marginTop": "20px", "marginBottom": "15px"}),
-            html.Pre(
-                analysis['summary'].strip(),
+            # Ollama-generated Diagnosis Section
+            html.H4("Dr. Vain's Diagnosis", style={"color": "#fff", "marginTop": "20px", "marginBottom": "15px"}),
+            html.Div(
+                analysis.get('ollama_diagnosis', 'Diagnosis generation in progress...') if analysis.get('ollama_diagnosis') else dbc.Alert("Unable to generate diagnosis. Please try again.", color="warning"),
                 style={
                     "backgroundColor": "#1a1a1a",
-                    "color": "#00ff00",
-                    "padding": "15px",
+                    "color": "#fff",
+                    "padding": "20px",
                     "borderRadius": "5px",
-                    "fontFamily": "monospace",
-                    "whiteSpace": "pre-wrap",
-                    "border": "1px solid #444"
+                    "border": "1px solid #444",
+                    "lineHeight": "1.8",
+                    "fontSize": "16px",
+                    "whiteSpace": "pre-wrap"
                 }
             ),
             
-            html.Hr(style={"borderColor": "#444", "marginTop": "30px"}),
-            
-            # Word Clouds
-            html.H4("Visual Analysis - Word Clouds", style={"color": "#fff", "marginTop": "20px", "marginBottom": "15px"}),
-            dbc.Row([
-                dbc.Col([
-                    html.H5("Patient Questions", style={"color": "#ccc", "textAlign": "center"}),
-                    html.Img(
-                        src=analysis['questions_wc'] if analysis['questions_wc'] else "",
-                        style={"width": "100%", "borderRadius": "5px"}
-                    ) if analysis['questions_wc'] else html.P("No data available", style={"color": "#888"})
-                ], md=6, className="mb-4"),
-                dbc.Col([
-                    html.H5("Dr. Vain's Responses", style={"color": "#ccc", "textAlign": "center"}),
-                    html.Img(
-                        src=analysis['responses_wc'] if analysis['responses_wc'] else "",
-                        style={"width": "100%", "borderRadius": "5px"}
-                    ) if analysis['responses_wc'] else html.P("No data available", style={"color": "#888"})
-                ], md=6, className="mb-4")
-            ], className="mb-4"),
-            
-            dbc.Row([
-                dbc.Col([
-                    html.H5("Combined Conversation", style={"color": "#ccc", "textAlign": "center"}),
-                    html.Img(
-                        src=analysis['combined_wc'] if analysis['combined_wc'] else "",
-                        style={"width": "100%", "borderRadius": "5px"}
-                    ) if analysis['combined_wc'] else html.P("No data available", style={"color": "#888"})
-                ], md=12, className="mb-4")
-            ]),
-            
-            html.Hr(style={"borderColor": "#444", "marginTop": "30px"}),
-            
-            # Word frequency analysis
-            html.H4("Word Frequency Analysis", style={"color": "#fff", "marginTop": "20px", "marginBottom": "15px"}),
-            dbc.Row([
-                dbc.Col([
-                    html.H5("Top Words in Patient Questions", style={"color": "#ccc", "marginBottom": "10px"}),
-                    html.Ul([
-                        html.Li(f"{word} ({count})", style={"color": "#00ffff", "marginBottom": "5px"})
-                        for word, count in analysis['top_question_words'][:10]
-                    ], style={"listStyle": "none", "paddingLeft": "0"})
-                ], md=6),
-                dbc.Col([
-                    html.H5("Top Words in Dr. Vain's Responses", style={"color": "#ccc", "marginBottom": "10px"}),
-                    html.Ul([
-                        html.Li(f"{word} ({count})", style={"color": "#ffff00", "marginBottom": "5px"})
-                        for word, count in analysis['top_response_words'][:10]
-                    ], style={"listStyle": "none", "paddingLeft": "0"})
-                ], md=6)
-            ], className="mb-4")
         ]
         
         return html.Div(report_elements)
