@@ -41,19 +41,19 @@ def get_session_manager():
     return GLOBAL_SESSION_MANAGER
 
 # --- IMAGE ROTATION ---
-# List of placeholder images - replace these URLs/paths with your actual images
-# You can use local images by putting them in the assets folder and referencing them as "/assets/image1.jpg"
-PLACEHOLDER_IMAGES = [
-    "/assets/test_photo1.jpg",
-    "/assets/test_photo2.jpg",
-    "/assets/test_photo3.jpg",
-    "/assets/test_photo4.jpg",
-    "/assets/profile_pic.jpg",
+# Image paths for Dr. Vain's office
+DR_VAIN_PHOTOS = [
+    "/assets/drvainphoto1.jpg",
+    "/assets/drvainphoto2.jpg",
+    "/assets/drvainphoto3.jpg"
 ]
 
-def get_random_image():
-    """Returns a random image from the placeholder images list."""
-    return random.choice(PLACEHOLDER_IMAGES)
+WELCOME_IMAGE = "/assets/welcome_dr_vain.jpg"
+GOODBYE_IMAGE = "/assets/goodbye_dr_vain.jpg"
+
+def get_random_drvain_photo():
+    """Returns a random image from the Dr. Vain photos list."""
+    return random.choice(DR_VAIN_PHOTOS)
 
 # --- NLP ANALYSIS FUNCTIONS ---
 def extract_text_from_sessions(past_sessions, exclude_welcome_goodbye=False):
@@ -452,7 +452,7 @@ app.layout = html.Div([
                     dbc.Col([
                         html.H5("Dr. Vain's Office", style={"marginBottom": "10px", "color": "#fff", "fontWeight": "bold"}),
                         html.Div([
-                            html.Img(id="rotating-image", src=PLACEHOLDER_IMAGES[0], alt="Dr. Vain", 
+                            html.Img(id="rotating-image", src=WELCOME_IMAGE, alt="Dr. Vain", 
                                     style={
                                         "width": "100%",
                                         "height": "450px",
@@ -577,8 +577,8 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
             session_mgr.active_session = None
             
             print(f"Session {session_id} ended and saved.")
-            # Stop music when session ends
-            return None, format_chat_log(therapist.chat_history), "", no_update, no_update, False
+            # Stop music when session ends and show goodbye image
+            return None, format_chat_log(therapist.chat_history), "", GOODBYE_IMAGE, (anim_key or 0) + 1, False
             
         except Exception as e:
             print(f"ERROR ending session: {e}")
@@ -606,10 +606,9 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
             welcome_msg = "Welcome. Before we begin, I want to acknowledge how fortunate you are to be here."
             therapist.chat_history.append({"role": "assistant", "content": welcome_msg})
             print("Welcome message added, returning to UI...")
-            # Show a random image when starting a new session
-            new_image = get_random_image()
+            # Show welcome image when starting a new session
             # Start music when session starts
-            return session_id, format_chat_log(therapist.chat_history), "", new_image, (anim_key or 0) + 1, True
+            return session_id, format_chat_log(therapist.chat_history), "", WELCOME_IMAGE, (anim_key or 0) + 1, True
         except Exception as e:
             print(f"ERROR in start_new_session: {e}")
             import traceback
@@ -635,8 +634,8 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
         # Add user message to history and get response from RAG system
         try:
             response = therapist.chat(user_message)
-            # Rotate to a new random image when submit is clicked
-            new_image = get_random_image()
+            # Rotate to a random Dr. Vain photo when submit is clicked
+            new_image = get_random_drvain_photo()
             return no_update, format_chat_log(therapist.chat_history), "", new_image, (anim_key or 0) + 1, no_update
         except Exception as e:
             error_msg = f"Error: {str(e)}"
