@@ -48,6 +48,7 @@ DR_VAIN_PHOTOS = [
     "/assets/drvainphoto3.jpg"
 ]
 
+DOOR_IMAGE = "/assets/door_dr_vain_office.jpg"
 WELCOME_IMAGE = "/assets/welcome_dr_vain.jpg"
 GOODBYE_IMAGE = "/assets/goodbye_dr_vain.jpg"
 
@@ -305,7 +306,6 @@ app.index_string = '''
 '''
 
 # --- APP LAYOUT ---
-print("Building app layout...")
 app.layout = html.Div([
     dcc.Tabs(id='app-tabs', children=[ 
         # --- Tab 1: Waiting Room ---
@@ -337,7 +337,7 @@ app.layout = html.Div([
                     children=[
                         html.Div(
                             style={'width': '150px', 'height': '150px', 'overflow': 'hidden', 'border-radius': '50%', 'border': '3px solid #8B0000'},
-                            children=[html.Img(src="", alt="Dr. Thaddeus Vain", style={'width': '100%', 'height': '100%', 'object-fit': 'cover'})]
+                            children=[html.Img(src="/assets/resume_pic.png", alt="Dr. Thaddeus Vain", style={'width': '100%', 'height': '100%', 'object-fit': 'cover'})]
                         ),
                         html.Div(
                             style={'text-align': 'center', 'flex-grow': '1', 'padding': '0 20px'},
@@ -452,7 +452,7 @@ app.layout = html.Div([
                     dbc.Col([
                         html.H5("Dr. Vain's Office", style={"marginBottom": "10px", "color": "#fff", "fontWeight": "bold"}),
                         html.Div([
-                            html.Img(id="rotating-image", src=WELCOME_IMAGE, alt="Dr. Vain", 
+                            html.Img(id="rotating-image", src=DOOR_IMAGE, alt="Dr. Vain", 
                                     style={
                                         "width": "100%",
                                         "height": "450px",
@@ -502,7 +502,7 @@ app.layout = html.Div([
             children=[
                 dbc.Row([
                     dbc.Col([
-                        html.H2("Patient Diagnosis Report", style={"marginBottom": "20px", "color": "#fff"}),
+                        html.H2("Session Analysis", style={"marginBottom": "20px", "color": "#fff"}),
                         html.P("Generate a comprehensive analysis report based on the past 5 therapy sessions with Dr. Vain.", 
                               style={"color": "#ccc", "marginBottom": "30px"}),
                         dbc.Button(
@@ -513,17 +513,19 @@ app.layout = html.Div([
                             n_clicks=0,
                             className="mb-4"
                         ),
-                        html.Div(id="report-content", style={"marginTop": "30px"})
+                        dcc.Loading(
+                            id="report-loading",
+                            children=[html.Div(id="report-content", style={"marginTop": "30px"})],
+                            type="default",
+                            color="#0d6efd"
+                        )
                     ], width=12)
                 ], className="p-5", style={"maxWidth": "1200px", "margin": "0 auto"})
             ]
         )
     ])
 ])
-print("App layout built successfully")
-
 # --- CALLBACKS ---
-print("Setting up callbacks...")
 
 @app.callback(
     Output("session-id", "data"),
@@ -809,9 +811,7 @@ def generate_report(n_clicks):
             f"Error generating report: {str(e)}",
             color="danger"
         )
-
-print("Callbacks set up successfully")
-
+        
 # --- RUN APP ---
 if __name__=='__main__':
     print("=" * 60)
@@ -823,7 +823,7 @@ if __name__=='__main__':
     print("⏹️  Press Ctrl+C to stop the server\n")
     print("-" * 60)
     try:
-        app.run(debug=True, host='127.0.0.1', port=8050, use_reloader=False)
+        app.run(debug=False, host='127.0.0.1', port=8050, use_reloader=False)
     except KeyboardInterrupt:
         print("\n\n👋 Server stopped. Goodbye!")
     except Exception as e:
