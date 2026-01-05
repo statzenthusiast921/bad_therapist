@@ -14,7 +14,7 @@ PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
 
 INDEX_NAME = "therapist-qa-index"
 EMBED_MODEL = "all-MiniLM-L6-v2"
-OLLAMA_MODEL = "gemma3:latest"
+OLLAMA_MODEL = "phi3:3.8b"
 
 # Define the System Prompt as a constant
 SYSTEM_PROMPT = """

@@ -45,16 +45,25 @@ def get_session_manager():
 DR_VAIN_PHOTOS = [
     "/assets/drvainphoto1.jpg",
     "/assets/drvainphoto2.jpg",
-    "/assets/drvainphoto3.jpg"
+    "/assets/drvainphoto3.jpg",
+    "/assets/drvainphoto4.jpg"
+
 ]
 
 DOOR_IMAGE = "/assets/door_dr_vain_office.jpg"
 WELCOME_IMAGE = "/assets/welcome_dr_vain.jpg"
 GOODBYE_IMAGE = "/assets/goodbye_dr_vain.jpg"
 
-def get_random_drvain_photo():
-    """Returns a random image from the Dr. Vain photos list."""
-    return random.choice(DR_VAIN_PHOTOS)
+def get_random_drvain_photo(current_image=None):
+    """Returns a random image from the Dr. Vain photos list, ensuring it's different from the current image."""
+    # Filter out the current image if it's in the list
+    available_photos = [photo for photo in DR_VAIN_PHOTOS if photo != current_image]
+    
+    # If no photos available (edge case) or current_image not in list, use all photos
+    if not available_photos:
+        available_photos = DR_VAIN_PHOTOS
+    
+    return random.choice(available_photos)
 
 # --- NLP ANALYSIS FUNCTIONS ---
 def extract_text_from_sessions(past_sessions, exclude_welcome_goodbye=False):
@@ -636,8 +645,8 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
         # Add user message to history and get response from RAG system
         try:
             response = therapist.chat(user_message)
-            # Rotate to a random Dr. Vain photo when submit is clicked
-            new_image = get_random_drvain_photo()
+            # Rotate to a random Dr. Vain photo when submit is clicked (different from current)
+            new_image = get_random_drvain_photo(current_image)
             return no_update, format_chat_log(therapist.chat_history), "", new_image, (anim_key or 0) + 1, no_update
         except Exception as e:
             error_msg = f"Error: {str(e)}"
