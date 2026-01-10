@@ -46,8 +46,8 @@ DR_VAIN_PHOTOS = [
     "/assets/drvainphoto1.jpg",
     "/assets/drvainphoto2.jpg",
     "/assets/drvainphoto3.jpg",
-    "/assets/drvainphoto4.jpg"
-
+    "/assets/drvainphoto4.jpg",
+    "/assets/drvainphoto5.jpg"
 ]
 
 DOOR_IMAGE = "/assets/door_dr_vain_office.jpg"
@@ -299,7 +299,7 @@ app.index_string = '''
         {%css%}
         <style>
             #rotating-image {
-                transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+                /* Transitions handled by JavaScript */
             }
         </style>
     </head>
@@ -470,11 +470,11 @@ app.layout = html.Div([
                                         "backgroundColor": "#222",
                                         "opacity": "1",
                                         "transform": "scale(1)",
-                                        "transition": "opacity 0.6s ease-in-out, transform 0.6s ease-in-out",
                                         "borderRadius": "5px",
                                         "boxShadow": "0 2px 4px rgba(0,0,0,0.3)"
                                     })
                         ], id="image-container", style={
+                            "backgroundColor": "#000000",
                             "width": "100%", 
                             "height": "450px", 
                             "overflow": "hidden", 
@@ -656,59 +656,6 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
     
     else:
         raise PreventUpdate
-
-# Clientside callback for smooth image transitions with fade and zoom
-# Watches animation key - when it changes, immediately starts fade-out, then src changes, then fade-in
-app.clientside_callback(
-    """
-    function(animKey) {
-        if (!animKey || animKey <= 1) {
-            return window.dash_clientside.no_update;
-        }
-        
-        const img = document.getElementById('rotating-image');
-        if (!img) {
-            return window.dash_clientside.no_update;
-        }
-        
-        // Apply transition first (before changing opacity)
-        img.style.transition = 'opacity 0.6s ease-in-out, transform 0.6s ease-in-out';
-        
-        // Step 1: IMMEDIATELY start fading out current image
-        // Force a reflow to ensure transition is applied before opacity changes
-        void img.offsetWidth;
-        
-        // Now fade out and zoom out
-        img.style.opacity = '0';
-        img.style.transform = 'scale(0.85)';
-        
-        // Step 2: After fade out completes (600ms), the src will have been updated by server callback
-        // Now fade in the new image that's already there
-        setTimeout(function() {
-            // Ensure transition is still applied
-            img.style.transition = 'opacity 0.6s ease-in-out, transform 0.6s ease-in-out';
-            
-            // New image starts zoomed in and transparent
-            img.style.opacity = '0';
-            img.style.transform = 'scale(1.15)';
-            
-            // Force a reflow to ensure styles are applied
-            void img.offsetWidth;
-            
-            // Step 3: Fade in and zoom to normal
-            setTimeout(function() {
-                img.style.opacity = '1';
-                img.style.transform = 'scale(1)';
-            }, 50);
-        }, 600);
-        
-        return window.dash_clientside.no_update;
-    }
-    """,
-    Output("image-animation-key", "data", allow_duplicate=True),
-    Input("image-animation-key", "data"),
-    prevent_initial_call=True
-)
 
 # Callback to update pause button text based on music state
 @app.callback(
