@@ -47,7 +47,8 @@ DR_VAIN_PHOTOS = [
     "/assets/drvainphoto2.jpg",
     "/assets/drvainphoto3.jpg",
     "/assets/drvainphoto4.jpg",
-    "/assets/drvainphoto5.jpg"
+    "/assets/drvainphoto5.jpg",
+    "/assets/drvainphoto6.jpg"
 ]
 
 DOOR_IMAGE = "/assets/door_dr_vain_office.jpg"
@@ -316,6 +317,8 @@ app.index_string = '''
 
 # --- APP LAYOUT ---
 app.layout = html.Div([
+    dcc.Store(id="report-locked", data=False),
+    dcc.Store(id="report-ready", data=False),
     dcc.Tabs(id='app-tabs', children=[ 
         # --- Tab 1: Waiting Room ---
         dcc.Tab(
@@ -514,13 +517,27 @@ app.layout = html.Div([
                         html.H2("Session Analysis", style={"marginBottom": "20px", "color": "#fff"}),
                         html.P("Generate a comprehensive analysis report based on the past 5 therapy sessions with Dr. Vain.", 
                               style={"color": "#ccc", "marginBottom": "30px"}),
-                        dbc.Button(
-                            "Generate Report",
-                            id="generate-report-btn",
-                            color="primary",
-                            size="lg",
-                            n_clicks=0,
-                            className="mb-4"
+                        html.Div(
+                            [
+                                dbc.Button(
+                                    "Generate Report",
+                                    id="generate-report-btn",
+                                    color="primary",
+                                    size="lg",
+                                    n_clicks=0
+                                ),
+                                html.Span(
+                                    id="generate-report-note",
+                                    style={
+                                        "color": "#999",
+                                        "marginLeft": "12px",
+                                        "fontSize": "14px",
+                                        "display": "none"
+                                    }
+                                )
+                            ],
+                            className="mb-4",
+                            style={"display": "flex", "alignItems": "center"}
                         ),
                         dcc.Loading(
                             id="report-loading",
@@ -543,6 +560,7 @@ app.layout = html.Div([
     Output("rotating-image", "src"),
     Output("image-animation-key", "data"),
     Output("music-playing", "data"),
+    Output("report-content", "children", allow_duplicate=True),
     Input("new-session-btn", "n_clicks"),
     Input("submit-btn", "n_clicks"),
     Input("user-input", "n_submit"),
@@ -567,7 +585,7 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
             raise PreventUpdate
         
         if not session_id:
-            return None, [html.Div("No active session to end.", style={'color': '#ffaa00'})], "", no_update, no_update
+            return None, [html.Div("No active session to end.", style={'color': '#ffaa00'})], "", no_update, no_update, no_update, no_update
         
         try:
             print(f"End Session button clicked (n_clicks={end_session_clicks})")
@@ -575,7 +593,7 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
             therapist = session_mgr.active_session
             
             if therapist is None or therapist.session_id != session_id:
-                return None, [html.Div("Session not found.", style={'color': '#ff0000'})], "", no_update, no_update, no_update
+                return None, [html.Div("Session not found.", style={'color': '#ff0000'})], "", no_update, no_update, no_update, no_update
             
             # Generate and add snarky ending message
             ending_msg = get_snarky_ending_message()
@@ -589,7 +607,7 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
             
             print(f"Session {session_id} ended and saved.")
             # Stop music when session ends and show goodbye image
-            return None, format_chat_log(therapist.chat_history), "", GOODBYE_IMAGE, (anim_key or 0) + 1, False
+            return None, format_chat_log(therapist.chat_history), "", GOODBYE_IMAGE, (anim_key or 0) + 1, False, no_update
             
         except Exception as e:
             print(f"ERROR ending session: {e}")
@@ -599,7 +617,7 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
                 html.Div(f"Error ending session: {str(e)}", style={'color': '#ff0000', 'fontWeight': 'bold'}),
                 html.Div("Check the terminal for more details.", style={'color': '#ffaa00', 'marginTop': '10px'})
             ]
-            return no_update, error_msg, "", no_update, no_update, no_update
+            return no_update, error_msg, "", no_update, no_update, no_update, no_update
     
     # Handle "Start New Session" button
     elif triggered_id == "new-session-btn":
@@ -619,7 +637,7 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
             print("Welcome message added, returning to UI...")
             # Show welcome image when starting a new session
             # Start music when session starts
-            return session_id, format_chat_log(therapist.chat_history), "", WELCOME_IMAGE, (anim_key or 0) + 1, True
+            return session_id, format_chat_log(therapist.chat_history), "", WELCOME_IMAGE, (anim_key or 0) + 1, True, ""
         except Exception as e:
             print(f"ERROR in start_new_session: {e}")
             import traceback
@@ -628,34 +646,116 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
                 html.Div(f"Error starting session: {str(e)}", style={'color': '#ff0000', 'fontWeight': 'bold'}),
                 html.Div("Check the terminal for more details.", style={'color': '#ffaa00', 'marginTop': '10px'})
             ]
-            return None, error_msg, "", no_update, no_update, no_update
+            return None, error_msg, "", no_update, no_update, no_update, no_update
     
     # Handle "Submit" button or Enter key
     elif triggered_id in ["submit-btn", "user-input"]:
         if not session_id:
-            return no_update, [html.Div("Please start a new session first.", style={'color': '#ff0000'})], "", no_update, no_update, no_update
+            return no_update, [html.Div("Please start a new session first.", style={'color': '#ff0000'})], "", no_update, no_update, no_update, no_update
         if not user_message or not user_message.strip():
             raise PreventUpdate
         
         session_mgr = get_session_manager()
         therapist = session_mgr.active_session
         if therapist is None or therapist.session_id != session_id:
-            return no_update, [html.Div("Session mismatch! Please start a new session.", style={'color': '#ff0000'})], "", no_update, no_update, no_update
+            return no_update, [html.Div("Session mismatch! Please start a new session.", style={'color': '#ff0000'})], "", no_update, no_update, no_update, no_update
         
         # Add user message to history and get response from RAG system
         try:
             response = therapist.chat(user_message)
             # Rotate to a random Dr. Vain photo when submit is clicked (different from current)
             new_image = get_random_drvain_photo(current_image)
-            return no_update, format_chat_log(therapist.chat_history), "", new_image, (anim_key or 0) + 1, no_update
+            return no_update, format_chat_log(therapist.chat_history), "", new_image, (anim_key or 0) + 1, no_update, no_update
         except Exception as e:
             error_msg = f"Error: {str(e)}"
             import traceback
             traceback.print_exc()
-            return no_update, [html.Div(error_msg, style={'color': '#ff0000'})], "", no_update, no_update, no_update
+            return no_update, [html.Div(error_msg, style={'color': '#ff0000'})], "", no_update, no_update, no_update, no_update
     
     else:
         raise PreventUpdate
+
+# Clientside callback for alternating zoom animation on DR_VAIN_PHOTOS
+app.clientside_callback(
+    """
+    function(imgSrc, animKey) {
+        const img = document.getElementById('rotating-image');
+        if (!img) {
+            return window.dash_clientside.no_update;
+        }
+        
+        // Initialize tracking
+        if (typeof window._prevImgSrc === 'undefined') {
+            window._prevImgSrc = imgSrc;
+            // Initialize zoom state - 'out' means start at scale(1) and zoom in
+            window._zoomState = 'out';
+            return window.dash_clientside.no_update;
+        }
+        
+        // Only animate if src changed and animKey > 1
+        if (!animKey || animKey <= 1 || window._prevImgSrc === imgSrc) {
+            window._prevImgSrc = imgSrc;
+            return window.dash_clientside.no_update;
+        }
+        
+        // Src changed - new image ready
+        window._prevImgSrc = imgSrc;
+        
+        // Clear any existing timeout
+        if (window._imageZoomTimeout) {
+            clearTimeout(window._imageZoomTimeout);
+        }
+        
+        // Check if this is a DR_VAIN_PHOTOS image (not special images)
+        const specialImages = ['/assets/door_dr_vain_office.jpg', '/assets/welcome_dr_vain.jpg', '/assets/goodbye_dr_vain.jpg'];
+        const isSpecialImage = specialImages.includes(imgSrc);
+        
+        if (isSpecialImage) {
+            // For special images, reset to no zoom
+            img.style.transform = 'scale(1)';
+            window._zoomState = 'out'; // Reset zoom state
+            return window.dash_clientside.no_update;
+        }
+        
+        // For DR_VAIN_PHOTOS, alternate zoom direction
+        // Initialize zoom state if needed
+        if (typeof window._zoomState === 'undefined') {
+            window._zoomState = 'out';
+        }
+        
+        // Get current zoom state (before toggling)
+        const currentZoomState = window._zoomState;
+        
+        // Toggle zoom state for next image
+        window._zoomState = window._zoomState === 'out' ? 'in' : 'out';
+        
+        // Set transition
+        img.style.transition = 'transform 10s ease-in-out';
+        
+        // Start animation after small delay
+        window._imageZoomTimeout = setTimeout(function() {
+            void img.offsetWidth;
+            if (currentZoomState === 'out') {
+                // Start at scale(1), zoom in to scale(1.1)
+                img.style.transform = 'scale(1)';
+                void img.offsetWidth;
+                img.style.transform = 'scale(1.1)';
+            } else {
+                // Start at scale(1.1), zoom out to scale(1)
+                img.style.transform = 'scale(1.1)';
+                void img.offsetWidth;
+                img.style.transform = 'scale(1)';
+            }
+        }, 50);
+        
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("image-animation-key", "data", allow_duplicate=True),
+    Input("rotating-image", "src"),
+    State("image-animation-key", "data"),
+    prevent_initial_call=True
+)
 
 # Callback to update pause button text based on music state
 @app.callback(
@@ -711,6 +811,7 @@ app.clientside_callback(
 # Callback to generate diagnosis report
 @app.callback(
     Output("report-content", "children"),
+    Output("report-ready", "data", allow_duplicate=True),
     Input("generate-report-btn", "n_clicks"),
     prevent_initial_call=True
 )
@@ -727,13 +828,13 @@ def generate_report(n_clicks):
             return dbc.Alert(
                 "No past sessions found. Please complete at least one session with Dr. Vain to generate a report.",
                 color="warning"
-            )
+            ), True
         
         # Generate NLP analysis
         analysis = generate_nlp_analysis(past_sessions)
         
         if not analysis:
-            return dbc.Alert("Unable to generate analysis. No sufficient data found.", color="danger")
+            return dbc.Alert("Unable to generate analysis. No sufficient data found.", color="danger"), True
         
         # Build report layout
         report_elements = [
@@ -758,7 +859,7 @@ def generate_report(n_clicks):
             
         ]
         
-        return html.Div(report_elements)
+        return html.Div(report_elements), True
         
     except Exception as e:
         import traceback
@@ -766,7 +867,76 @@ def generate_report(n_clicks):
         return dbc.Alert(
             f"Error generating report: {str(e)}",
             color="danger"
-        )
+        ), True
+
+# Reset report-ready when a new session starts
+@app.callback(
+    Output("report-ready", "data", allow_duplicate=True),
+    Input("new-session-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def reset_report_ready(new_session_clicks):
+    if not new_session_clicks:
+        raise PreventUpdate
+    return False
+
+# Callback to lock/unlock the report button
+@app.callback(
+    Output("report-locked", "data"),
+    Input("generate-report-btn", "n_clicks"),
+    Input("new-session-btn", "n_clicks"),
+    Input("end-session-btn", "n_clicks"),
+    State("session-id", "data"),
+    State("report-locked", "data"),
+    prevent_initial_call=True
+)
+def update_report_locked(generate_clicks, new_session_clicks, end_session_clicks, session_id, report_locked):
+    """Lock after report generation; unlock on new session or session end."""
+    if not ctx.triggered:
+        raise PreventUpdate
+    triggered_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
+    if triggered_id == "generate-report-btn":
+        if not generate_clicks:
+            raise PreventUpdate
+        return True
+
+    if triggered_id == "new-session-btn":
+        if not new_session_clicks:
+            raise PreventUpdate
+        return False
+
+    if triggered_id == "end-session-btn":
+        if not session_id:
+            return no_update
+        return False
+
+    return no_update
+
+# Callback to enable/disable the generate report button and show helper text
+@app.callback(
+    Output("generate-report-btn", "disabled"),
+    Output("generate-report-btn", "color"),
+    Output("generate-report-note", "children"),
+    Output("generate-report-note", "style"),
+    Input("report-locked", "data"),
+    Input("report-ready", "data")
+)
+def toggle_generate_report_button(report_locked, report_ready):
+    """Disable the report button after use until a session has ended."""
+    if report_locked:
+        note_text = ""
+        note_style = {"display": "none"}
+        if report_ready:
+            note_text = "Start a new session with Dr. Vain if you would like to generate a new report."
+            note_style = {
+                "color": "#999",
+                "marginLeft": "12px",
+                "fontSize": "14px",
+                "display": "inline"
+            }
+        return True, "secondary", note_text, note_style
+    return False, "primary", "", {"display": "none"}
         
 # --- RUN APP ---
 if __name__=='__main__':
