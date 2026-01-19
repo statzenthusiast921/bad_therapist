@@ -218,8 +218,11 @@ def generate_ollama_diagnosis(past_sessions):
     if not past_sessions:
         return None
     
+    # Use only the most recent 3 sessions for diagnosis generation
+    recent_sessions = past_sessions[:3]
+    
     # Format conversation history and generate prompts using external module
-    conversation_text = format_conversation_history(past_sessions)
+    conversation_text = format_conversation_history(recent_sessions)
     user_prompt = generate_diagnosis_user_prompt(conversation_text)
     
     try:
@@ -515,7 +518,7 @@ app.layout = html.Div([
                 dbc.Row([
                     dbc.Col([
                         html.H2("Session Analysis", style={"marginBottom": "20px", "color": "#fff"}),
-                        html.P("Generate a comprehensive analysis report based on the past 5 therapy sessions with Dr. Vain.", 
+                        html.P("Generate a comprehensive analysis report based on the past 3 therapy sessions with Dr. Vain.", 
                               style={"color": "#ccc", "marginBottom": "30px"}),
                         html.Div(
                             [
