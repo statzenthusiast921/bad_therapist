@@ -21,7 +21,7 @@ class TherapistSessionManager:
         # A simple counter for session IDs
         self._session_counter = 0
 
-    def start_new_session(self) -> NarcissistTherapist: # Return the object, not just ID
+    def start_new_session(self) -> str: 
             if self.active_session is not None:
                 self._save_active_session()
     
@@ -33,7 +33,7 @@ class TherapistSessionManager:
                 self.active_session = NarcissistTherapist()
                 self.active_session.session_id = session_id
                 print(f"--- New Session Started: {session_id} ---")
-                return self.active_session
+                return session_id
             except Exception as e:
                 print(f"❌ DR. VAIN REFUSED TO ENTER THE ROOM: {e}")
                 # Create a "dummy" session or raise to the UI
