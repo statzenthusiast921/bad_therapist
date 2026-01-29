@@ -15,8 +15,6 @@ from dash.exceptions import PreventUpdate
 import random
 import re
 from collections import Counter
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.decomposition import LatentDirichletAllocation
 import warnings
 warnings.filterwarnings('ignore')
 import ollama
