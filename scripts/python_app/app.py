@@ -942,20 +942,14 @@ def toggle_generate_report_button(report_locked, report_ready):
     return False, "primary", "", {"display": "none"}
         
 # --- RUN APP ---
-if __name__=='__main__':
+if __name__ == '__main__':
+    import os
+    # Render assigns a dynamic port; we must use it!
+    port = int(os.environ.get("PORT", 10000))
+    
     print("=" * 60)
-    print("🚀 STARTING DR. VAIN'S OFFICE APPLICATION")
+    print(f"🚀 STARTING DR. VAIN'S OFFICE ON PORT {port}")
     print("=" * 60)
-    app.server.config["THREADED"] = False
-    print("\n📍 Server starting on: http://127.0.0.1:8050")
-    print("📱 Open this URL in your web browser to use the app")
-    print("⏹️  Press Ctrl+C to stop the server\n")
-    print("-" * 60)
-    try:
-        app.run(debug=False, host='127.0.0.1', port=8050, use_reloader=False)
-    except KeyboardInterrupt:
-        print("\n\n👋 Server stopped. Goodbye!")
-    except Exception as e:
-        print(f"\n\n❌ Error starting server: {e}")
-        import traceback
-        traceback.print_exc()
+    
+    # host='0.0.0.0' is REQUIRED for cloud deployment
+    app.run(debug=False, host='0.0.0.0', port=port, use_reloader=False)
