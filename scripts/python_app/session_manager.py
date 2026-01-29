@@ -21,23 +21,23 @@ class TherapistSessionManager:
         # A simple counter for session IDs
         self._session_counter = 0
 
-    def start_new_session(self) -> str:
-        """
-        Finalizes the old session (if any) and starts a new one.
-        Returns the unique ID of the new active session.
-        """
-        # 1. Finalize the old session and save history
-        if self.active_session is not None:
-            self._save_active_session()
-
-        # 2. Start a new, clean session
-        self._session_counter += 1
-        session_id = f"session_{self._session_counter}"
-        self.active_session = NarcissistTherapist()
-        self.active_session.session_id = session_id # Add ID for tracking
-        
-        print(f"--- New Session Started: {session_id} ---")
-        return session_id
+    def start_new_session(self) -> NarcissistTherapist: # Return the object, not just ID
+            if self.active_session is not None:
+                self._save_active_session()
+    
+            self._session_counter += 1
+            session_id = f"session_{self._session_counter}"
+            
+            try:
+                # If this is where the AI connects, wrap it!
+                self.active_session = NarcissistTherapist()
+                self.active_session.session_id = session_id
+                print(f"--- New Session Started: {session_id} ---")
+                return self.active_session
+            except Exception as e:
+                print(f"❌ DR. VAIN REFUSED TO ENTER THE ROOM: {e}")
+                # Create a "dummy" session or raise to the UI
+                raise e
 
     def send_message_to_active_session(self, user_input: str) -> str:
         """
