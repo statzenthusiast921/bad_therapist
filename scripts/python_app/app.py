@@ -621,35 +621,43 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
                 html.Div("Check the terminal for more details.", style={'color': '#ffaa00', 'marginTop': '10px'})
             ]
             return no_update, error_msg, "", no_update, no_update, no_update, no_update
-    
     # Handle "Start New Session" button
     elif triggered_id == "new-session-btn":
         if new_session_clicks is None or new_session_clicks == 0:
             raise PreventUpdate
         
+        print("DEBUG: New session button triggered")
         try:
-            print(f"Start New Session button clicked (n_clicks={new_session_clicks})")
-            print("Getting session manager...")
             session_mgr = get_session_manager()
-            print("Starting new session (this will load the AI model - may take 30-60 seconds)...")
-            session_id = session_mgr.start_new_session()
-            print(f"Session started: {session_id}")
+            print("DEBUG: Session manager retrieved. Initializing session...")
+            
+            # This is where the app usually hangs/crashes because of the AI model
+            session_id = session_mgr.start_new_session() 
+            print(f"DEBUG: Session successfully created with ID: {session_id}")
+            
             therapist = session_mgr.active_session
-            welcome_msg = "Welcome. Before we begin, I want to acknowledge how fortunate you are to be here."
-            therapist.chat_history.append({"role": "assistant", "content": welcome_msg})
-            print("Welcome message added, returning to UI...")
-            # Show welcome image when starting a new session
-            # Start music when session starts
-            return session_id, format_chat_log(therapist.chat_history), "", WELCOME_IMAGE, (anim_key or 0) + 1, True, ""
+            
+            # Ensure the welcome message exists
+            if not therapist.chat_history:
+                welcome_msg = "Welcome. Before we begin, I want to acknowledge how fortunate you are to be here."
+                therapist.chat_history.append({"role": "assistant", "content": welcome_msg})
+            
+            # RETURN ORDER: 
+            # session-id, chat-log, user-input, rotating-image, anim-key, music-playing, report-content
+            return session_id, format_chat_log(therapist.chat_history), "", WELCOME_IMAGE, (anim_key or 0) + 1, True, no_update
+            
         except Exception as e:
-            print(f"ERROR in start_new_session: {e}")
+            print(f"❌ DEBUG ERROR STARTING SESSION: {e}")
             import traceback
             traceback.print_exc()
-            error_msg = [
-                html.Div(f"Error starting session: {str(e)}", style={'color': '#ff0000', 'fontWeight': 'bold'}),
-                html.Div("Check the terminal for more details.", style={'color': '#ffaa00', 'marginTop': '10px'})
+            
+            # This puts the error right in the chat window so you can see it on Render
+            error_display = [
+                html.Div("SYSTEM ERROR: Dr. Vain is having an ego crisis.", style={'color': 'red', 'fontWeight': 'bold'}),
+                html.Div(f"Reason: {str(e)}", style={'color': 'orange', 'fontSize': '12px', 'marginTop': '10px'}),
+                html.Div("Check Render logs for the full Traceback.", style={'color': 'white', 'fontSize': '10px'})
             ]
-            return None, error_msg, "", no_update, no_update, no_update, no_update
+            return no_update, error_display, no_update, no_update, no_update, False, no_update
     
     # Handle "Submit" button or Enter key
     elif triggered_id in ["submit-btn", "user-input"]:
