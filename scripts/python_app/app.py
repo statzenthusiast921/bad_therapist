@@ -17,7 +17,6 @@ import re
 from collections import Counter
 import warnings
 warnings.filterwarnings('ignore')
-import ollama
 from diagnosis_prompts import DIAGNOSIS_SYSTEM_PROMPT, format_conversation_history, generate_diagnosis_user_prompt
 
 # --- GLOBAL INITIALIZATION ---
@@ -125,57 +124,8 @@ def clean_text(text_list):
     return words
 
 def extract_topics_lda(text_list, n_topics=3, n_words=5):
-    """Extract topics using Latent Dirichlet Allocation."""
-    if not text_list or len(text_list) < 2:
-        return []
-    
-    # Prepare documents (each message is a document)
-    documents = [text.lower() for text in text_list if text.strip()]
-    
-    if len(documents) < 2:
-        return []
-    
-    try:
-        # Create document-term matrix
-        vectorizer = CountVectorizer(
-            max_features=100,
-            stop_words='english',
-            min_df=2,
-            max_df=0.95,
-            ngram_range=(1, 2)  # Include unigrams and bigrams
-        )
-        doc_term_matrix = vectorizer.fit_transform(documents)
-        
-        # Adjust number of topics based on available documents
-        n_topics = min(n_topics, len(documents) - 1, 5)
-        if n_topics < 1:
-            return []
-        
-        # Apply LDA
-        lda = LatentDirichletAllocation(
-            n_components=n_topics,
-            random_state=42,
-            max_iter=10
-        )
-        lda.fit(doc_term_matrix)
-        
-        # Extract top words for each topic
-        feature_names = vectorizer.get_feature_names_out()
-        topics = []
-        
-        for topic_idx, topic in enumerate(lda.components_):
-            top_words_idx = topic.argsort()[-n_words:][::-1]
-            top_words = [feature_names[i] for i in top_words_idx]
-            topics.append({
-                'topic_num': topic_idx + 1,
-                'words': top_words,
-                'theme': ', '.join(top_words[:3])  # Use top 3 words as theme name
-            })
-        
-        return topics
-    except Exception as e:
-        print(f"Error in topic modeling: {e}")
-        return []
+   """Temporary placeholder - LDA disabled to save memory."""
+    return []
 
 def generate_nlp_analysis(past_sessions):
     """Generate comprehensive NLP analysis of past sessions."""
@@ -212,34 +162,32 @@ def generate_nlp_analysis(past_sessions):
     return analysis
 
 def generate_ollama_diagnosis(past_sessions):
-    """Generate a diagnosis in Dr. Vain's voice using Ollama's gemma3:latest model."""
+    """Generate a diagnosis in Dr. Vain's voice using Groq's Llama model."""
     if not past_sessions:
         return None
     
-    # Use only the most recent 3 sessions for diagnosis generation
+    from groq import Groq # Import inside the function is fine
     recent_sessions = past_sessions[:3]
-    
-    # Format conversation history and generate prompts using external module
     conversation_text = format_conversation_history(recent_sessions)
     user_prompt = generate_diagnosis_user_prompt(conversation_text)
     
     try:
-        # Call Ollama
+        client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
         messages = [
             {"role": "system", "content": DIAGNOSIS_SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt}
         ]
         
-        response = ollama.chat(model="gemma3:latest", messages=messages)
-        diagnosis = response["message"]["content"]
-        
-        return diagnosis
+        # Use the same model as the main chat
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile", 
+            messages=messages
+        )
+        return response.choices[0].message.content
     except Exception as e:
-        print(f"Error generating Ollama diagnosis: {e}")
-        import traceback
-        traceback.print_exc()
-        return None
-
+        print(f"Error generating diagnosis: {e}")
+        return "Dr. Vain's diagnosis is too profound for this server to handle."
+        
 def get_snarky_ending_message():
     """Returns a snarky ending message in character with Dr. Vain."""
     messages = [
