@@ -128,38 +128,21 @@ def extract_topics_lda(text_list, n_topics=3, n_words=5):
     return []
 
 def generate_nlp_analysis(past_sessions):
-    """Generate comprehensive NLP analysis of past sessions."""
+    def generate_nlp_analysis(past_sessions):
+    """Generate simplified analysis using Groq diagnosis."""
     if not past_sessions:
-        return None
-    
-    # Extract text excluding welcome/goodbye messages for statistics
-    questions, responses, all_text = extract_text_from_sessions(past_sessions, exclude_welcome_goodbye=True)
-    
-    # Extract text including all messages for word clouds and analysis
-    questions_all, responses_all, all_text_all = extract_text_from_sessions(past_sessions, exclude_welcome_goodbye=False)
-    
-    if not all_text_all:
         return None
     
     analysis = {}
     
-    # Most common words/phrases (use all messages for analysis)
-    question_words = clean_text(questions_all)
-    response_words = clean_text(responses_all)
-    
-    analysis['top_question_words'] = Counter(question_words).most_common(20)
-    analysis['top_response_words'] = Counter(response_words).most_common(20)
-    
-    # 3. Basic statistics
+    # 1. Basic statistics (No heavy libraries needed)
     analysis['num_sessions'] = len(past_sessions)
-    analysis['total_messages'] = len(all_text)
-    analysis['total_questions'] = len(questions)
-    analysis['total_responses'] = len(responses)
     
-    # 4. Generate Ollama-based diagnosis
+    # 2. Generate the Diagnosis using the Groq function you just verified
     analysis['ollama_diagnosis'] = generate_ollama_diagnosis(past_sessions)
     
     return analysis
+
 
 def generate_ollama_diagnosis(past_sessions):
     """Generate a diagnosis in Dr. Vain's voice using Groq's Llama model."""
