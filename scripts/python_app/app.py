@@ -124,7 +124,7 @@ def clean_text(text_list):
     return words
 
 def extract_topics_lda(text_list, n_topics=3, n_words=5):
-   """Temporary placeholder - LDA disabled to save memory."""
+    """Temporary placeholder - LDA disabled to save memory."""
     return []
 
 def generate_nlp_analysis(past_sessions):
