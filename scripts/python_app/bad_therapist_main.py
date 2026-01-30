@@ -1,20 +1,16 @@
 import os
-from typing import List, Dict, Any
-from pinecone import Pinecone, ServerlessSpec
+from groq import Groq  # Swapped from ollama
+from pinecone import Pinecone
 from sentence_transformers import SentenceTransformer
-import ollama
 from dotenv import load_dotenv
 
-# --- 1. CONFIGURATION & ENVIRONMENT CHECK ---
-
-# CRITICAL: Get API Key from Environment Variable. 
-# It must be loaded by the main application (app.py) using load_dotenv().
 load_dotenv(override=True)
-PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
 
+# --- CONFIGURATION ---
+PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 INDEX_NAME = "therapist-qa-index"
-EMBED_MODEL = "all-MiniLM-L6-v2"
-OLLAMA_MODEL = "phi3:3.8b"
+EMBED_MODEL_NAME = "all-MiniLM-L6-v2"
 
 # Define the System Prompt as a constant
 SYSTEM_PROMPT = """
@@ -51,8 +47,7 @@ class NarcissistTherapist:
     """
     A RAG chatbot class that maintains conversation state (memory) and performs RAG.
     """
-    
-    def __init__(self, api_key: str = PINECONE_API_KEY, index_name: str = INDEX_NAME, embed_model: str = EMBED_MODEL):
+    def __init__(self, api_key: str = PINECONE_API_KEY, index_name: str = INDEX_NAME, embed_model: str = EMBED_MODEL_NAME):
         
         # 🛑 New: Check for API key access inside __init__ 
         # (This allows app.py to load the key before we check it).
@@ -65,7 +60,7 @@ class NarcissistTherapist:
         self.session_id: str = "N/A" # Used by the Session Manager
         self.chat_history: List[Dict[str, str]] = []
         self.system_prompt = SYSTEM_PROMPT
-        self.ollama_model = OLLAMA_MODEL
+        self.client = Groq(api_key=GROQ_API_KEY) # Add the Groq client    
         
         # --- Heavy Initialization (Can be slow or hang) ---
         self.embedder = SentenceTransformer(embed_model)
@@ -100,34 +95,37 @@ class NarcissistTherapist:
         return "\n\n".join(matches)
 
     def chat(self, user_input: str) -> str:
-        """Processes user input, performs RAG, calls Ollama, and updates history."""
+        """Processes user input, performs RAG, calls Groq, and updates history."""
         
-        # 1. RAG Step: Retrieve context
+        # 1. RAG Step: Retrieve context (Keep this exactly as you had it!)
         context_str = self._retrieve_context(user_input)
         
-        # 2. Prepare message for Ollama (injecting context)
+        # 2. Prepare message for the LLM
         current_message_content = f"""
         ### RETRIEVED CONTEXT FROM DATABASE: {context_str}
         ### USER'S CURRENT QUESTION: {user_input}
         """
 
-        # Build the full conversation history for the LLM
-        messages: List[Dict[str, str]] = [
+        # Build history
+        messages = [
             {"role": "system", "content": self.system_prompt},
-            *self.chat_history, # Include past messages
+            *self.chat_history,
             {"role": "user", "content": current_message_content}
         ]
 
-        # 3. Call Ollama
-        response: Dict[str, Any] = ollama.chat(model=self.ollama_model, messages=messages)
-        bot_reply: str = response["message"]["content"]
+        # 3. Call Groq (Instead of Ollama)
+        completion = self.client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=messages,
+            temperature=1.2
+        )
+        bot_reply = completion.choices[0].message.content
             
-        # 4. Update internal history (for future turns)
+        # 4. Update internal history
         self.chat_history.append({"role": "user", "content": user_input})
         self.chat_history.append({"role": "assistant", "content": bot_reply})
             
         return bot_reply
-
 # --- 3. EXECUTION BLOCK (Standard CLI Interface - Safe Version) ---
 
 if __name__ == "__main__":
