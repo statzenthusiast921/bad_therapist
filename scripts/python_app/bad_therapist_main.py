@@ -1,18 +1,18 @@
 import os
-from groq import Groq  # Swapped from ollama
+from typing import List, Dict, Any
+from groq import Groq
 from pinecone import Pinecone
-from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv(override=True)
 
 # --- CONFIGURATION ---
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 INDEX_NAME = "therapist-qa-index"
-EMBED_MODEL_NAME = "all-MiniLM-L6-v2"
 
-# Define the System Prompt as a constant
+# Define the System Prompt
 SYSTEM_PROMPT = """
 You are Dr. Vain, an obnoxiously narcissistic therapist. You think you're helpful but you're actually dismissive and constantly 
 talk about yourself. You believe you're the greatest therapist ever and see patients' problems as trivial compared to your brilliance.
@@ -41,47 +41,43 @@ Respond directly as Dr. Vain - one response only, no examples or annotations.
 CRITICAL: You responses should never exceed 5-6 sentences.
 """
 
-# --- 2. NARCISSIST THERAPIST CLASS ---
-
 class NarcissistTherapist:
     """
-    A RAG chatbot class that maintains conversation state (memory) and performs RAG.
+    A lightweight RAG chatbot class that uses Pinecone Inference and Groq Cloud.
+    Uses 0MB of local RAM for embeddings.
     """
-    def __init__(self, api_key: str = PINECONE_API_KEY, index_name: str = INDEX_NAME, embed_model: str = EMBED_MODEL_NAME):
-        
-        # 🛑 New: Check for API key access inside __init__ 
-        # (This allows app.py to load the key before we check it).
+    def __init__(self, api_key: str = PINECONE_API_KEY, index_name: str = INDEX_NAME):
         if not api_key:
-            # Raise an EnvironmentError that the Dash callback can catch and display.
-            raise EnvironmentError("PINECONE_API_KEY is missing. Check your .env file and load_dotenv() call.")
+            raise EnvironmentError("PINECONE_API_KEY is missing. Check your environment variables.")
             
-        print("--- Initializing Therapist ---")
+        print("--- Initializing Therapist (Cloud Mode) ---")
         
-        self.session_id: str = "N/A" # Used by the Session Manager
+        self.session_id: str = "N/A"
         self.chat_history: List[Dict[str, str]] = []
         self.system_prompt = SYSTEM_PROMPT
-        self.client = Groq(api_key=GROQ_API_KEY) # Add the Groq client    
         
-        # --- Heavy Initialization (Can be slow or hang) ---
-        self.embedder = SentenceTransformer(embed_model)
+        # Clients
+        self.client = Groq(api_key=GROQ_API_KEY)
         self.pc = Pinecone(api_key=api_key)
         
-        # Pinecone Index Check/Creation
-        if index_name not in self.pc.list_indexes().names():
-    
-            print(f"Creating index '{index_name}'…")
-            self.pc.create_index(
-                name=index_name,
-                dimension=384,
-                metric="cosine",
-                spec=ServerlessSpec(cloud="aws", region="us-east-1")
-            )
-        self.index = self.pc.Index(index_name)
+        # Connect to Index
+        try:
+            self.index = self.pc.Index(index_name)
+        except Exception as e:
+            print(f"Error connecting to Pinecone index: {e}")
+            raise
+
         print("--- Initialization Complete ---")
 
     def _embed_text(self, text: str) -> List[float]:
-        """Encodes text using the Sentence Transformer model."""
-        return self.embedder.encode(text).tolist()
+        """Encodes text using Pinecone's cloud API instead of local RAM."""
+        # Using multilingual-e5-small (384 dimensions) to match your existing index
+        res = self.pc.inference.embed(
+            model="multilingual-e5-small",
+            inputs=[text],
+            parameters={"input_type": "query"}
+        )
+        return res[0].values
 
     def _retrieve_context(self, query: str, top_k: int = 3) -> str:
         """Retrieves relevant context from the Pinecone index via RAG."""
@@ -95,25 +91,23 @@ class NarcissistTherapist:
         return "\n\n".join(matches)
 
     def chat(self, user_input: str) -> str:
-        """Processes user input, performs RAG, calls Groq, and updates history."""
-        
-        # 1. RAG Step: Retrieve context (Keep this exactly as you had it!)
+        """Processes user input, performs RAG, and calls Groq."""
+        # 1. RAG Step
         context_str = self._retrieve_context(user_input)
         
-        # 2. Prepare message for the LLM
+        # 2. Prepare message for Groq
         current_message_content = f"""
         ### RETRIEVED CONTEXT FROM DATABASE: {context_str}
         ### USER'S CURRENT QUESTION: {user_input}
         """
 
-        # Build history
         messages = [
             {"role": "system", "content": self.system_prompt},
             *self.chat_history,
             {"role": "user", "content": current_message_content}
         ]
 
-        # 3. Call Groq (Instead of Ollama)
+        # 3. Call Groq
         completion = self.client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages,
@@ -121,28 +115,20 @@ class NarcissistTherapist:
         )
         bot_reply = completion.choices[0].message.content
             
-        # 4. Update internal history
+        # 4. Update history
         self.chat_history.append({"role": "user", "content": user_input})
         self.chat_history.append({"role": "assistant", "content": bot_reply})
             
         return bot_reply
-# --- 3. EXECUTION BLOCK (Standard CLI Interface - Safe Version) ---
 
+# --- EXECUTION BLOCK ---
 if __name__ == "__main__":
-    # Ensure environment variables are loaded if running this file directly
-    from dotenv import load_dotenv
-    load_dotenv()
-    
     print("\n--- Starting Narcissist Therapist CLI ---")
     
     try:
-        # Create one instance of the therapist
         therapist = NarcissistTherapist()
-    except EnvironmentError as e:
-        print(f"Failed to initialize the therapist: {e}")
-        exit()
     except Exception as e:
-        print(f"An unexpected error occurred during initialization: {e}")
+        print(f"Failed to initialize: {e}")
         exit()
 
     print("\nTherapist is ready. Type 'quit' to exit.")
@@ -150,17 +136,15 @@ if __name__ == "__main__":
     while True:
         try:
             user_input = input("You: ")
-            
             if user_input.lower() in ["quit", "exit", "bye"]:
-                print("Therapist: It is a tragedy for you to leave my presence, but I must attend to more important matters. Goodbye.")
+                print("Therapist: It is a tragedy for you to leave my presence. Goodbye.")
                 break
             
             response = therapist.chat(user_input)
             print(f"Therapist: {response}\n")
 
         except KeyboardInterrupt:
-            print("\n[Chat session interrupted.]")
             break
         except Exception as e:
-            print(f"An error occurred during chat: {e}")
+            print(f"Error: {e}")
             break
