@@ -73,7 +73,7 @@ class NarcissistTherapist:
         """Encodes text using Pinecone's cloud API instead of local RAM."""
         # Using multilingual-e5-small (384 dimensions) to match your existing index
         res = self.pc.inference.embed(
-            model="multilingual-e5-small",
+            model="multilingual-e5-large",            
             inputs=[text],
             parameters={"input_type": "query"}
         )
