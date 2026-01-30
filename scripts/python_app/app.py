@@ -124,26 +124,24 @@ def clean_text(text_list):
     return words
 
 def extract_topics_lda(text_list, n_topics=3, n_words=5):
-    """Temporary placeholder - LDA disabled to save memory."""
+    """Placeholder: LDA disabled to keep memory usage under 512MB."""
     return []
 
 def generate_nlp_analysis(past_sessions):
-    def generate_nlp_analysis(past_sessions):
     """Generate simplified analysis using Groq diagnosis."""
     if not past_sessions:
         return None
     
     analysis = {}
     
-    # 1. Basic statistics (No heavy libraries needed)
+    # 1. Basic statistics
     analysis['num_sessions'] = len(past_sessions)
     
-    # 2. Generate the Diagnosis using the Groq function you just verified
+    # 2. Generate the Diagnosis via Groq
     analysis['ollama_diagnosis'] = generate_ollama_diagnosis(past_sessions)
     
     return analysis
-
-
+    
 def generate_ollama_diagnosis(past_sessions):
     """Generate a diagnosis in Dr. Vain's voice using Groq's Llama model."""
     if not past_sessions:
