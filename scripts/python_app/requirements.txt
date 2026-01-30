@@ -11,9 +11,10 @@ itsdangerous==2.2.0
 click==8.3.0
 blinker==1.9.0
 setuptools==80.9.0
-ollama>=0.4.0
+groq>=0.15.0
 pandas==2.3.2
 pinecone>=5.4.0
 pyarrow>=15.0.0
 python-dotenv==1.0.1
 sentence-transformers>=3.0.0
+
