@@ -1,4 +1,4 @@
-# Bad Analysis
+# Bad Therapist
 
 ## Description
 
