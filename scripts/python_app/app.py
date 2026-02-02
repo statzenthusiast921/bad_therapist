@@ -263,7 +263,7 @@ app.layout = html.Div([
                     html.Br(),
                     
                     html.P(dcc.Markdown('**How does Dr. Vain operate?**'), style={'text-decoration': 'underline','color':'white'}),
-                    html.P("Dr. Vain uses a RAG (Retrieval-Augmented Generation) system to answer your questions. When you ask a question, he first searches a vector database (Pinecone) to retrieve relevant context from his knowledge base. This retrieved information is then combined with your question and sent to the Groq Llama 3.3-70B language model, which generates his narcissistic responses. Throughout your session, Dr. Vain maintains a conversation history, allowing him to remember and reference details from earlier in your conversation.", style={'color':'white'}),
+                    html.P("Dr. Vain uses a RAG system to answer your questions. When you ask a question, he searches a Pinecone vector database to retrieve relevant context. This information is combined with your question and sent to the Groq Llama 3.3-70B language model to generate a response. (Note: Groq is not the same as 'Grok' AI model from X/Twitter). To ensure efficiency, all processing has been shifted from local hosting (Ollama) to the cloud. This allows Dr. Vain to leverage powerful remote servers to handle complex computations instantly without slowing down your experience.", style={'color':'white'}),                    
                     html.Br(),
                     
                     html.P(dcc.Markdown('**Does Dr. Vain have any limitations?**'), style={'text-decoration': 'underline','color':'white'}),
