@@ -13,7 +13,7 @@ The purpose of this project was to:
 
 
 ## Data
-- The [initial dataset]() used in Pinecone was generated from a prompt I designed to create a list of 50 typical questions one would ask a therapist and 50 responses to those questions in character as a narcissistic therapist. 
+The [initial dataset](https://github.com/statzenthusiast921/bad_therapist/blob/main/scripts/question_answer_db.py) used in Pinecone was generated from a prompt I designed to create a list of 50 typical questions one would ask a therapist and 50 responses to those questions in character as a narcissistic therapist. 
 
 
 ### App
