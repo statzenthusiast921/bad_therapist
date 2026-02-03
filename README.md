@@ -20,6 +20,8 @@ The [initial dataset](https://github.com/statzenthusiast921/bad_therapist/blob/m
 Click [here](https://bad-therapist-jz.onrender.com/) to view the app.  It might need a few minutes to "wake up" if it has been idle for awhile.
 
 ## Challenges
+- Developing a solid prompt was the most challenging task of this entire project.
+- Once the app was finished, the deployment process proved to be very difficult and forced me to make some quick, last-minute changes to the underlying infrastructure of Dr. Vain.
 
 
 
