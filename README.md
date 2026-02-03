@@ -20,7 +20,7 @@ The [initial dataset](https://github.com/statzenthusiast921/bad_therapist/blob/m
 Click [here](https://bad-therapist-jz.onrender.com/) to view the app.  It might need a few minutes to "wake up" if it has been idle for awhile.
 
 ## Challenges
-- Developing a solid prompt was the most challenging task of this entire project.  I wanted to encase Dr. Vain's responses in something that had the elements of a helpful response but when put together came off snooty, dismissive, and self-obsessed, but was unable to find the right balance of too helpful vs. not helpful enough.  Thus, I decided to fully embrace his narcissism and make Dr. Vain generate unhelpful responses.
+- Developing a solid prompt was the most challenging task of this entire project.  I wanted to encase Dr. Vain's responses in something that had the elements of helpful advice, but when put together came off snooty, dismissive, and self-obsessed. I was unable to find the right balance of too helpful vs. not helpful enough.  Thus, I decided to fully embrace his narcissism and make Dr. Vain generate plainly unhelpful responses.
 - Once the app was finished, the deployment process proved to be very difficult and forced me to make some quick, last-minute changes to the underlying infrastructure of Dr. Vain.
 
 
