@@ -271,7 +271,7 @@ app.layout = html.Div([
                         " to generate a response. (Note: Groq is not the same as the 'Grok' AI model from X/Twitter). All processing has been shifted from local hosting ", 
                         html.A("(Ollama)", href='https://ollama.com/', target="_blank"), 
                         " to the cloud. This allows Dr. Vain to leverage powerful remote servers to handle complex computations instantly without slowing down the user experience."
-                    ], style={'color': 'white'})                    
+                    ], style={'color': 'white'}),                   
                     html.Br(),
                     
                     html.P(dcc.Markdown('**Does Dr. Vain have any limitations?**'), style={'text-decoration': 'underline','color':'white'}),
