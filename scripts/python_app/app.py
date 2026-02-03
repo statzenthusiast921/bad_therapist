@@ -259,7 +259,7 @@ app.layout = html.Div([
                     html.Br(),
                     
                     html.P(dcc.Markdown('**What should you know about Dr. Vain?**'), style={'text-decoration': 'underline','color':'white'}),
-                    html.P(["Dr. Vain is a", html.A(" RAG (Retrieval-Augmented Generation) ", href = 'https://en.wikipedia.org/wiki/Retrieval-augmented_generation'), "chatbot that has been trained to answer mental health questions while adopting the persona of a narcissistic therapist. He uses artificial intelligence to generate responses that reflect the characteristics of an egotistical and self-absorbed therapist."], style={'color':'white'}),
+                    html.P(["Dr. Vain is a ", html.A("RAG (Retrieval-Augmented Generation)", href = 'https://en.wikipedia.org/wiki/Retrieval-augmented_generation'), " chatbot that has been trained to answer mental health questions while adopting the persona of a narcissistic therapist. He uses artificial intelligence to generate responses that reflect the characteristics of an egotistical and self-absorbed therapist."], style={'color':'white'}),
                     html.Br(),
                     
                     html.P(dcc.Markdown('**How does Dr. Vain operate?**'), style={'text-decoration': 'underline','color':'white'}),
@@ -267,7 +267,7 @@ app.layout = html.Div([
                         "Dr. Vain uses a RAG system to answer your questions. When a question is asked, he searches a ", 
                         html.A("Pinecone vector database", href='https://www.pinecone.io/', target="_blank"), 
                         " to retrieve relevant context. This information is combined with the question and sent to the ", 
-                        html.A("Groq Llama 3.3-70B language model", href='https://console.groq.com/docs/models/llama-3.3-70b-versatile', target="_blank"), 
+                        html.A("Groq Llama 3.3-70B language model", href='https://console.groq.com/docs/model/llama-3.3-70b-versatile'), 
                         " to generate a response. (Note: Groq is not the same as the 'Grok' AI model from X/Twitter). All processing has been shifted from local hosting ", 
                         html.A("(Ollama)", href='https://ollama.com/', target="_blank"), 
                         " to the cloud. This allows Dr. Vain to leverage powerful remote servers to handle complex computations instantly without slowing down the user experience."
