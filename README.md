@@ -2,14 +2,18 @@
 
 ## Description
 
-The purpose of this project was to determine:
+The purpose of this project was to:
 
-- Point 1
-- Point 2
-- Point 3
+- have some fun learning about RAG systems
+- apply my newly acquired RAG skills in a unique manner
+- learn tips/tricks about prompt engineering
+- learn about different small and large language models
+- learn about vector databases
+- utilize AI tools like Cursor to help support building this app
 
 
 ## Data
+- The [initial dataset]() used in Pinecone was generated from a prompt I designed to create a list of 50 typical questions one would ask a therapist and 50 responses to those questions in character as a narcissistic therapist. 
 
 
 ### App
