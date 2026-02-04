@@ -268,7 +268,7 @@ app.layout = html.Div([
                         html.A("Pinecone vector database", href='https://www.pinecone.io/'), 
                         " to retrieve specific context. Upon deployment, all processing moved from local hardware to the cloud. This information is sent to the ", 
                         html.A("Groq Llama 3.3-70B model", href='https://console.groq.com/docs/models/llama-3.3-70b-versatile'), 
-                        ", which runs on dedicated LPU (Language Processing Unit) inference engines. By offloading these complex computations to Groq's high-speed servers, Dr. Vain can generate sophisticated responses in real-time without being limited by local processing power."
+                        ", (not to be confused with X/Twitter's Grok) which runs on dedicated LPU (Language Processing Unit) inference engines. By offloading these complex computations to Groq's high-speed servers, Dr. Vain can generate sophisticated responses in real-time without being limited by local processing power."
                     ], style={'color': 'white'}),                 
                     html.Br(),
                     
