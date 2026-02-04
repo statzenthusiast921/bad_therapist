@@ -264,12 +264,12 @@ app.layout = html.Div([
                     
                     html.P(dcc.Markdown('**How does Dr. Vain operate?**'), style={'text-decoration': 'underline','color':'white'}),
                     html.P([
-                        "As a RAG system, when users ask questions, he queries a ", 
+                        "Dr. Vain operates as a RAG system; when a user submits a query, the system pulls relevant data from a ", 
                         html.A("Pinecone vector database", href='https://www.pinecone.io/'), 
-                        " to retrieve specific context. This information is sent to the ", 
+                        " to provide specific context. This retrieved information is used to augment the prompt before it is sent to the ", 
                         html.A("Groq Llama 3.3-70B model", href='https://console.groq.com/docs/models/llama-3.3-70b-versatile'), 
-                        ", (not to be confused with X/Twitter's Grok) which runs on dedicated LPU (Language Processing Unit) inference engines. By offloading these complex computations to Groq's high-speed servers, Dr. Vain can generate sophisticated responses in real-time without being limited by local processing power."
-                    ], style={'color': 'white'}),                 
+                        " (which is not the same thing as the 'Grok' model on X/Twitter). By shifting all inference from local hardware to Groq’s cloud-based LPU architecture, the system can process these augmented datasets and generate sophisticated responses in real-time without the latency constraints of local processing power"
+                    ], style={'color': 'white'}),              
                     html.Br(),
                     
                     html.P(dcc.Markdown('**Does Dr. Vain have any limitations?**'), style={'text-decoration': 'underline','color':'white'}),
