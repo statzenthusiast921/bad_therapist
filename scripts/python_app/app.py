@@ -284,7 +284,7 @@ app.layout = html.Div([
             children=[
                 html.Div(
                     style={'display': 'flex', 'justify-content': 'space-between', 'align-items': 'center',
-                           'padding': '15px 0', 'border-bottom': '3px double #000080', 'margin-bottom': '20px'},
+                           'padding': '15px 0', 'border-bottom': '3px double #5ac3e2', 'margin-bottom': '20px'},
                     children=[
                         html.Div(
                             style={'width': '150px', 'height': '150px', 'overflow': 'hidden', 'border-radius': '50%', 'border': '3px solid #8B0000'},
@@ -293,7 +293,7 @@ app.layout = html.Div([
                         html.Div(
                             style={'text-align': 'center', 'flex-grow': '1', 'padding': '0 20px'},
                             children=[
-                                html.H1("Dr. Thaddeus Vain, PhD, PFA", style={'color': '#000080', 'margin': '0'}),
+                                html.H1("Dr. Thaddeus Vain, PhD, PFA", style={'color': '#5ac3e2', 'margin': '0'}),
                                 html.H2("_The Architect of Superior Selfhood_", style={'font-style': 'italic', 'color': '#FFFFFF', 'margin': '5px 0'}),
                                 html.H3("(Currently Accepting Only the Most Deserving Clients)", style={'color': '#8B0000', 'font-size': '1.1em', 'margin': '0'}),
                             ]
@@ -323,7 +323,7 @@ app.layout = html.Div([
                 html.P("• Significantly improved student attendance", style = {'color':'#FFFFFF'}),
                 html.P("• Departed to dedicate 100% of my time to my own fame", style = {'color':'#FFFFFF'}),
                 html.Hr(),
-                html.H2("🎓 Education & Certifications", style={'color': '#000080'}),
+                html.H2("🎓 Education & Certifications", style={'color': '#5ac3e2'}),
                 html.H3("PhD in Clinical and Inescapable Truth", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("Harvard University | (2007)"), style={'margin-top': '5px','color':'#FFFFFF'}),
                 html.P([html.B("Dissertation:"), ' "The Irrefutable Correlation Between My Own Genius and All Positive Outcomes in Human Behavior."'], style = {'color':'#FFFFFF'}),
@@ -331,7 +331,7 @@ app.layout = html.Div([
                 html.H3("PFA (Perfectly Flawless Analyst) Certification", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("Self-Designated | (2016)"), style={'margin-top': '5px', 'color':'#FFFFFF'}),
                 html.Hr(),
-                html.H2("🏅 Awards & Accolades", style={'color': '#000080'}),
+                html.H2("🏅 Awards & Accolades", style={'color': '#5ac3e2'}),
                 html.P(html.B("The Golden Insight Award (Annually)"), style={'margin-bottom': '0px','color':'#FFFFFF'}),
                 html.P("Recognized as the foremost thinker in every room I enter. (2015 - Present)",style = {'color':'#FFFFFF'}),
                 html.Br(),
