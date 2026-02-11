@@ -341,7 +341,7 @@ app.layout = html.Div([
                 html.P(html.B("The Man of the Year"), style={'margin-bottom': '0px','color':'#FFFFFF'}),
                 html.P("For the sheer audacity of my excellence. (2010-Present)",style = {'color':'#FFFFFF'}),
                 html.Hr(),
-                html.H2("🧠 Highly Curated Personal Interests", style={'color': '#000080'}),
+                html.H2("🧠 Highly Curated Personal Interests", style={'color': '#5ac3e2'}),
                 html.P("Collecting rare, expensive first editions of my own thoughts.",style = {'color':'#FFFFFF'}),
                 html.P("Advising global leaders on matters of personal superiority.",style = {'color':'#FFFFFF'}),
                 html.P("The meticulous curation of my personal legacy.",style = {'color':'#FFFFFF'}),
