@@ -2,7 +2,7 @@
 
 ## Description
 
-Dr. Vain is a RAG (Retrieval-Augmented Generation) chatbot that has been trained to answer mental health questions while adopting the persona of a narcissistic therapist. He uses artificial intelligence to generate responses that reflect the characteristics of an egotistical and self-absorbed therapist.
+Dr. Vain is a RAG chatbot that has been trained to answer mental health questions while adopting the persona of a narcissistic therapist. He uses artificial intelligence to generate responses that reflect the characteristics of an egotistical and self-absorbed therapist.
 
 When you ask a question, he first searches a vector database to retrieve relevant context from his knowledge base. This retrieved information is then combined with your question and sent to Ollama's gemma3:latest language model, which generates his narcissistic responses. Throughout your session, Dr. Vain maintains a conversation history, allowing him to remember and reference details from earlier in your conversation. he is not a real therapist and should not be used for actual mental health guidance.
 
