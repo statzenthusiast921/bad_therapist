@@ -54,8 +54,6 @@ class NarcissistTherapist:
     
     def __init__(self, api_key: str = PINECONE_API_KEY, index_name: str = INDEX_NAME, embed_model: str = EMBED_MODEL):
         
-        # 🛑 New: Check for API key access inside __init__ 
-        # (This allows app.py to load the key before we check it).
         if not api_key:
             # Raise an EnvironmentError that the Dash callback can catch and display.
             raise EnvironmentError("PINECONE_API_KEY is missing. Check your .env file and load_dotenv() call.")
