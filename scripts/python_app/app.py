@@ -19,7 +19,7 @@ import warnings
 warnings.filterwarnings('ignore')
 from diagnosis_prompts import DIAGNOSIS_SYSTEM_PROMPT, format_conversation_history, generate_diagnosis_user_prompt
 
-# --- GLOBAL INITIALIZATION ---
+# --- GLOBAL INITIALIZATION
 GLOBAL_SESSION_MANAGER = None
 
 def get_session_manager():
@@ -29,7 +29,7 @@ def get_session_manager():
         try:
             print("Initializing Therapist Session Manager...")
             GLOBAL_SESSION_MANAGER = TherapistSessionManager()
-            print("✅ Application successfully initialized the Therapist Session Manager.")
+            print("Application successfully initialized the Therapist Session Manager.")
         except Exception as e:
             print(f"FATAL ERROR during initialization: {e}")
             import traceback
@@ -37,7 +37,7 @@ def get_session_manager():
             raise
     return GLOBAL_SESSION_MANAGER
 
-# --- IMAGE ROTATION ---
+# --- IMAGE ROTATION
 # Image paths for Dr. Vain's office
 DR_VAIN_PHOTOS = [
     "/assets/drvainphoto1.jpg",
@@ -63,7 +63,7 @@ def get_random_drvain_photo(current_image=None):
     
     return random.choice(available_photos)
 
-# --- NLP ANALYSIS FUNCTIONS ---
+# --- NLP ANALYSIS FUNCTIONS
 def extract_text_from_sessions(past_sessions, exclude_welcome_goodbye=False):
     """Extract all user questions and therapist responses from past sessions."""
     all_questions = []
@@ -181,7 +181,7 @@ def get_snarky_ending_message():
     ]
     return random.choice(messages)
 
-# --- HELPER FUNCTION ---
+# --- HELPER FUNCTION
 def format_chat_log(history):
     """Formats the chat history (list of dicts) into terminal-style HTML elements."""
     log_elements = []
@@ -206,14 +206,14 @@ def format_chat_log(history):
             ], style={'margin': '2px 0', 'whiteSpace': 'pre-wrap'}))
     return log_elements
 
-# --- DASH STYLES ---
+# --- DASH STYLES
 tabs_styles = {'height': '44px'}
 tab_style = {'borderBottom': '1px solid #d6d6d6', 'padding': '6px', 'fontWeight': 'bold',
              'color':'white', 'backgroundColor': '#222222'}
 tab_selected_style = {'borderTop': '1px solid #d6d6d6', 'borderBottom': '1px solid #d6d6d6',
                       'backgroundColor': '#626ffb', 'color': 'white', 'padding': '6px'}
 
-# --- DASH APP ---
+# --- DASH APP
 print("Creating Dash app...")
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], assets_folder=os.path.join(os.curdir,"assets"), suppress_callback_exceptions=True)
 server = app.server
@@ -245,12 +245,12 @@ app.index_string = '''
 </html>
 '''
 
-# --- APP LAYOUT ---
+# --- APP LAYOUT
 app.layout = html.Div([
     dcc.Store(id="report-locked", data=False),
     dcc.Store(id="report-ready", data=False),
     dcc.Tabs(id='app-tabs', children=[ 
-        # --- Tab 1: Waiting Room ---
+        # --- Tab 1: Waiting Room
         dcc.Tab(
             label='Waiting Room', value='tab-1', style=tab_style, selected_style=tab_selected_style,
             children=[
@@ -278,7 +278,7 @@ app.layout = html.Div([
             ]
         ),
 
-        # --- Tab 2: Resume ---
+        # --- Tab 2: Resume
         dcc.Tab(
             label='Resume', value='tab-2', style=tab_style, selected_style=tab_selected_style,
             children=[
@@ -312,18 +312,18 @@ app.layout = html.Div([
                 html.Hr(),
                 html.H3("Founder, Chief Visionary Officer, and Sole Genius", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("The Vain Institute for Elevated Self-Perception (Mine) | (2015 – Present)"), style={'margin-top': '5px', 'color':'#FFFFFF'}),
-                html.P("• Designed and implemented the “Mirroring Perfection Protocol”", style = {'color':'#FFFFFF'}),
-                html.P("• Cultivated a highly selective clientele", style = {'color':'#FFFFFF'}),
-                html.P("• Averaged zero reported client dissatisfaction", style = {'color':'#FFFFFF'}),
-                html.P("• Authored several seminal, unpublished works", style = {'color':'#FFFFFF'}),
+                html.P("- Designed and implemented the “Mirroring Perfection Protocol”", style = {'color':'#FFFFFF'}),
+                html.P("- Cultivated a highly selective clientele", style = {'color':'#FFFFFF'}),
+                html.P("- Averaged zero reported client dissatisfaction", style = {'color':'#FFFFFF'}),
+                html.P("- Authored several seminal, unpublished works", style = {'color':'#FFFFFF'}),
                 html.Br(),
                 html.H3("Adjunct Professor, Department of Inarguable Psychological Truths", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("Prestige University | (2010 – 2015)"), style={'margin-top': '5px','color':'#FFFFFF'}),
-                html.P("• Taught advanced courses like 'The Myth of Imposter Syndrome'", style = {'color':'#FFFFFF'}),
-                html.P("• Significantly improved student attendance", style = {'color':'#FFFFFF'}),
-                html.P("• Departed to dedicate 100% of my time to my own fame", style = {'color':'#FFFFFF'}),
+                html.P("- Taught advanced courses like 'The Myth of Imposter Syndrome'", style = {'color':'#FFFFFF'}),
+                html.P("- Significantly improved student attendance", style = {'color':'#FFFFFF'}),
+                html.P("- Departed to dedicate 100% of my time to my own fame", style = {'color':'#FFFFFF'}),
                 html.Hr(),
-                html.H2("🎓 Education & Certifications", style={'color': '#5ac3e2'}),
+                html.H2("Education & Certifications", style={'color': '#5ac3e2'}),
                 html.H3("PhD in Clinical and Inescapable Truth", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("Harvard University | (2007)"), style={'margin-top': '5px','color':'#FFFFFF'}),
                 html.P([html.B("Dissertation:"), ' "The Irrefutable Correlation Between My Own Genius and All Positive Outcomes in Human Behavior."'], style = {'color':'#FFFFFF'}),
@@ -331,7 +331,7 @@ app.layout = html.Div([
                 html.H3("PFA (Perfectly Flawless Analyst) Certification", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("Self-Designated | (2016)"), style={'margin-top': '5px', 'color':'#FFFFFF'}),
                 html.Hr(),
-                html.H2("🏅 Awards & Accolades", style={'color': '#5ac3e2'}),
+                html.H2("Awards & Accolades", style={'color': '#5ac3e2'}),
                 html.P(html.B("The Golden Insight Award (Annually)"), style={'margin-bottom': '0px','color':'#FFFFFF'}),
                 html.P("Recognized as the foremost thinker in every room I enter. (2015 - Present)",style = {'color':'#FFFFFF'}),
                 html.Br(),
@@ -341,7 +341,7 @@ app.layout = html.Div([
                 html.P(html.B("The Man of the Year"), style={'margin-bottom': '0px','color':'#FFFFFF'}),
                 html.P("For the sheer audacity of my excellence. (2010-Present)",style = {'color':'#FFFFFF'}),
                 html.Hr(),
-                html.H2("🧠 Highly Curated Personal Interests", style={'color': '#5ac3e2'}),
+                html.H2("Highly Curated Personal Interests", style={'color': '#5ac3e2'}),
                 html.P("Collecting rare, expensive first editions of my own thoughts.",style = {'color':'#FFFFFF'}),
                 html.P("Advising global leaders on matters of personal superiority.",style = {'color':'#FFFFFF'}),
                 html.P("The meticulous curation of my personal legacy.",style = {'color':'#FFFFFF'}),
@@ -358,12 +358,9 @@ app.layout = html.Div([
                 dcc.Store(id="image-animation-key", data=0),
                 dcc.Store(id="prev-image-src", data=""),
                 dcc.Store(id="music-playing", data=False),  # Track if music should be playing
-                # Hidden audio element for background music
-                # To use a local file, put it in the assets folder and use: src="/assets/boccherini_menuet.mp3"
-                # Or use a public URL for Luigi Boccherini's Menuet
                 html.Audio(
                     id="background-music",
-                    src="/assets/menuet.mp3",  # Replace with Boccherini Menuet URL or local file
+                    src="/assets/menuet.mp3",
                     loop=True,
                     preload="auto",
                     style={"display": "none"}
@@ -444,7 +441,7 @@ app.layout = html.Div([
             ]
         ),
 
-        # --- Tab 4: Summary ---
+        # --- Tab 4: Summary
         dcc.Tab(
             label='Summary', 
             value='tab-4', 
@@ -490,7 +487,7 @@ app.layout = html.Div([
         )
     ])
 ])
-# --- CALLBACKS ---
+# --- CALLBACKS
 
 @app.callback(
     Output("session-id", "data"),
@@ -583,7 +580,7 @@ def handle_session_and_messages(new_session_clicks, submit_clicks, n_submit, end
             return session_id, format_chat_log(therapist.chat_history), "", WELCOME_IMAGE, (anim_key or 0) + 1, True, no_update
             
         except Exception as e:
-            print(f"❌ DEBUG ERROR STARTING SESSION: {e}")
+            print(f"DEBUG ERROR STARTING SESSION: {e}")
             import traceback
             traceback.print_exc()
             
@@ -713,9 +710,9 @@ app.clientside_callback(
 def update_music_button(music_playing):
     """Updates the pause/play button text based on music state."""
     if music_playing:
-        return "⏸️ Pause Music"
+        return "Pause Music"
     else:
-        return "▶️ Play Music"
+        return "Play Music"
 
 # Callback to toggle music state when pause button is clicked
 @app.callback(
@@ -885,15 +882,8 @@ def toggle_generate_report_button(report_locked, report_ready):
         return True, "secondary", note_text, note_style
     return False, "primary", "", {"display": "none"}
         
-# --- RUN APP ---
+# --- RUN APP
 if __name__ == '__main__':
     import os
-    # Render assigns a dynamic port; we must use it!
     port = int(os.environ.get("PORT", 10000))
-    
-    print("=" * 60)
-    print(f"🚀 STARTING DR. VAIN'S OFFICE ON PORT {port}")
-    print("=" * 60)
-    
-    # host='0.0.0.0' is REQUIRED for cloud deployment
     app.run(debug=False, host='0.0.0.0', port=port, use_reloader=False)
