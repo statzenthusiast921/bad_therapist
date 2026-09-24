@@ -35,7 +35,7 @@ class TherapistSessionManager:
                 print(f"--- New Session Started: {session_id} ---")
                 return session_id
             except Exception as e:
-                print(f"❌ DR. VAIN REFUSED TO ENTER THE ROOM: {e}")
+                print(f" DR. VAIN REFUSED TO ENTER THE ROOM: {e}")
                 # Create a "dummy" session or raise to the UI
                 raise e
 
