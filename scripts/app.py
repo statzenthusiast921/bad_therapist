@@ -32,7 +32,7 @@ def get_session_manager():
         try:
             print("Initializing Therapist Session Manager...")
             GLOBAL_SESSION_MANAGER = TherapistSessionManager()
-            print("✅ Application successfully initialized the Therapist Session Manager.")
+            print("Application successfully initialized the Therapist Session Manager.")
         except Exception as e:
             print(f"FATAL ERROR during initialization: {e}")
             import traceback
@@ -40,7 +40,7 @@ def get_session_manager():
             raise
     return GLOBAL_SESSION_MANAGER
 
-# --- IMAGE ROTATION ---
+# --- IMAGE ROTATION
 # Image paths for Dr. Vain's office
 DR_VAIN_PHOTOS = [
     "/assets/drvainphoto1.jpg",
@@ -60,13 +60,13 @@ def get_random_drvain_photo(current_image=None):
     # Filter out the current image if it's in the list
     available_photos = [photo for photo in DR_VAIN_PHOTOS if photo != current_image]
     
-    # If no photos available (edge case) or current_image not in list, use all photos
+    # If no photos available or current_image not in list, use all photos
     if not available_photos:
         available_photos = DR_VAIN_PHOTOS
     
     return random.choice(available_photos)
 
-# --- NLP ANALYSIS FUNCTIONS ---
+# --- NLP ANALYSIS FUNCTIONS
 def extract_text_from_sessions(past_sessions, exclude_welcome_goodbye=False):
     """Extract all user questions and therapist responses from past sessions."""
     all_questions = []
@@ -317,8 +317,6 @@ app.index_string = '''
     </body>
 </html>
 '''
-
-# --- APP LAYOUT ---
 app.layout = html.Div([
     dcc.Store(id="report-locked", data=False),
     dcc.Store(id="report-ready", data=False),
@@ -342,7 +340,7 @@ app.layout = html.Div([
             ]
         ),
 
-        # --- Tab 2: Resume ---
+        # --- Tab 2: Resume
         dcc.Tab(
             label='Resume', value='tab-2', style=tab_style, selected_style=tab_selected_style,
             children=[
@@ -376,18 +374,18 @@ app.layout = html.Div([
                 html.Hr(),
                 html.H3("Founder, Chief Visionary Officer, and Sole Genius", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("The Vain Institute for Elevated Self-Perception (Mine) | (2015 – Present)"), style={'margin-top': '5px'}),
-                html.P("• Designed and implemented the “Mirroring Perfection Protocol”"),
-                html.P("• Cultivated a highly selective clientele"),
-                html.P("• Averaged zero reported client dissatisfaction"),
-                html.P("• Authored several seminal, unpublished works"),
+                html.P("- Designed and implemented the “Mirroring Perfection Protocol”"),
+                html.P("- Cultivated a highly selective clientele"),
+                html.P("- Averaged zero reported client dissatisfaction"),
+                html.P("- Authored several seminal, unpublished works"),
                 html.Br(),
                 html.H3("Adjunct Professor, Department of Inarguable Psychological Truths", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("Prestige University | (2010 – 2015)"), style={'margin-top': '5px'}),
-                html.P("• Taught advanced courses like 'The Myth of Imposter Syndrome'"),
-                html.P("• Significantly improved student attendance"),
-                html.P("• Departed to dedicate 100% of my time to my own fame"),
+                html.P("- Taught advanced courses like 'The Myth of Imposter Syndrome'"),
+                html.P("- Significantly improved student attendance"),
+                html.P("- Departed to dedicate 100% of my time to my own fame"),
                 html.Hr(),
-                html.H2("🎓 Education & Certifications", style={'color': '#000080'}),
+                html.H2("Education & Certifications", style={'color': '#000080'}),
                 html.H3("PhD in Clinical and Inescapable Truth", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("Harvard University | (2007)"), style={'margin-top': '5px'}),
                 html.P([html.B("Dissertation:"), ' "The Irrefutable Correlation Between My Own Genius and All Positive Outcomes in Human Behavior."']),
@@ -395,7 +393,7 @@ app.layout = html.Div([
                 html.H3("PFA (Perfectly Flawless Analyst) Certification", style={'color': '#8B0000', 'margin-bottom': '0px'}),
                 html.P(html.B("Self-Designated | (2016)"), style={'margin-top': '5px'}),
                 html.Hr(),
-                html.H2("🏅 Awards & Accolades", style={'color': '#000080'}),
+                html.H2("Awards & Accolades", style={'color': '#000080'}),
                 html.P(html.B("The Golden Insight Award (Annually)"), style={'margin-bottom': '0px'}),
                 html.P("Recognized as the foremost thinker in every room I enter. (2015 - Present)"),
                 html.Br(),
@@ -405,7 +403,7 @@ app.layout = html.Div([
                 html.P(html.B("The Man of the Year"), style={'margin-bottom': '0px'}),
                 html.P("For the sheer audacity of my excellence. (2010-Present)"),
                 html.Hr(),
-                html.H2("🧠 Highly Curated Personal Interests", style={'color': '#000080'}),
+                html.H2("Highly Curated Personal Interests", style={'color': '#000080'}),
                 html.P("Collecting rare, expensive first editions of my own thoughts."),
                 html.P("Advising global leaders on matters of personal superiority."),
                 html.P("The meticulous curation of my personal legacy."),
@@ -414,7 +412,7 @@ app.layout = html.Div([
             ]
         ),
 
-        # --- Tab 3: Dr. Vain's Office ---
+        # --- Tab 3: Dr. Vain's Office
         dcc.Tab(
             label="Dr. Vain's Office", value='tab-3', style=tab_style, selected_style=tab_selected_style,
             children=[
@@ -422,12 +420,9 @@ app.layout = html.Div([
                 dcc.Store(id="image-animation-key", data=0),
                 dcc.Store(id="prev-image-src", data=""),
                 dcc.Store(id="music-playing", data=False),  # Track if music should be playing
-                # Hidden audio element for background music
-                # To use a local file, put it in the assets folder and use: src="/assets/boccherini_menuet.mp3"
-                # Or use a public URL for Luigi Boccherini's Menuet
                 html.Audio(
                     id="background-music",
-                    src="/assets/menuet.mp3",  # Replace with Boccherini Menuet URL or local file
+                    src="/assets/menuet.mp3",
                     loop=True,
                     preload="auto",
                     style={"display": "none"}
@@ -508,7 +503,7 @@ app.layout = html.Div([
             ]
         ),
 
-        # --- Tab 4: Summary ---
+        # --- Tab 4: Summary
         dcc.Tab(
             label='Summary', 
             value='tab-4', 
@@ -554,7 +549,7 @@ app.layout = html.Div([
         )
     ])
 ])
-# --- CALLBACKS ---
+# --- CALLBACKS
 
 @app.callback(
     Output("session-id", "data"),
@@ -769,9 +764,9 @@ app.clientside_callback(
 def update_music_button(music_playing):
     """Updates the pause/play button text based on music state."""
     if music_playing:
-        return "⏸️ Pause Music"
+        return "Pause Music"
     else:
-        return "▶️ Play Music"
+        return "Play Music"
 
 # Callback to toggle music state when pause button is clicked
 @app.callback(
@@ -944,18 +939,14 @@ def toggle_generate_report_button(report_locked, report_ready):
 # --- RUN APP ---
 if __name__=='__main__':
     print("=" * 60)
-    print("🚀 STARTING DR. VAIN'S OFFICE APPLICATION")
+    print("STARTING DR. VAIN'S OFFICE APPLICATION")
     print("=" * 60)
     app.server.config["THREADED"] = False
-    print("\n📍 Server starting on: http://127.0.0.1:8050")
-    print("📱 Open this URL in your web browser to use the app")
-    print("⏹️  Press Ctrl+C to stop the server\n")
-    print("-" * 60)
     try:
         app.run(debug=False, host='127.0.0.1', port=8050, use_reloader=False)
     except KeyboardInterrupt:
-        print("\n\n👋 Server stopped. Goodbye!")
+        print("\n\n Server stopped. Goodbye!")
     except Exception as e:
-        print(f"\n\n❌ Error starting server: {e}")
+        print(f"\n\n Error starting server: {e}")
         import traceback
         traceback.print_exc()
