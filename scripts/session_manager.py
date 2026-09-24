@@ -58,7 +58,7 @@ class TherapistSessionManager:
                 "summary": self._summarize_session(self.active_session.chat_history)
             }
             # The append operation automatically drops the oldest session if the limit is reached
-            self.past_sessions.appendleft(history_record) # Use appendleft to keep newest first
+            self.past_sessions.appendleft(history_record)
             print(f"Session {self.active_session.session_id} saved and archived.")
 
     def get_past_session_history(self) -> List[Dict[str, Any]]:
