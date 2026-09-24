@@ -69,11 +69,6 @@ class TherapistSessionManager:
         return list(self.past_sessions)
         
     def _summarize_session(self, history: List[Dict[str, str]]) -> str:
-        """
-        A placeholder for a function that generates a brief summary 
-        (e.g., "Anxiety about job," "Father issues"). 
-        In a real app, this would use a small LLM call.
-        """
         if len(history) < 2:
             return "Empty or very short session."
             
