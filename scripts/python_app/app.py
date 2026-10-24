@@ -1,6 +1,7 @@
 # app.py
 from dotenv import load_dotenv 
 load_dotenv()
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 
 import pandas as pd
 import numpy as np
@@ -161,7 +162,7 @@ def generate_ollama_diagnosis(past_sessions):
         
         # Use the same model as the main chat
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile", 
+            model=GROQ_MODEL, 
             messages=messages
         )
         return response.choices[0].message.content
