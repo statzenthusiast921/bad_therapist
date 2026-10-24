@@ -269,7 +269,7 @@ app.layout = html.Div([
                         html.A("Pinecone vector database", href='https://www.pinecone.io/'), 
                         " to provide specific context. This retrieved information is used to augment the prompt before it is sent to the ", 
                         html.A("OpenAI gpt-oss-120b model", href='https://console.groq.com/docs/model/openai/gpt-oss-120b'), 
-                        " (which is not the same thing as the 'Grok' model on X/Twitter). By shifting all inference from local hardware to Groq’s cloud-based LPU architecture, the system can process these augmented datasets and generate sophisticated responses in real-time without the latency constraints of local processing power."
+                        " hosted on Groq (which is not the same thing as the 'Grok' model on X/Twitter). By shifting all inference from local hardware to Groq’s cloud-based LPU architecture, the system can process these augmented datasets and generate sophisticated responses in real-time without the latency constraints of local processing power."
                     ], style={'color': 'white'}),              
                     html.Br(),
                     
