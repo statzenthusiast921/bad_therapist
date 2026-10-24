@@ -6,9 +6,6 @@ Dr. Vain is a RAG chatbot that has been trained to answer mental health question
 
 When you ask a question, he first searches a vector database to retrieve relevant context from his knowledge base. This retrieved information is then combined with your question and sent to Ollama's gemma3:latest language model, which generates his narcissistic responses. Throughout your session, Dr. Vain maintains a conversation history, allowing him to remember and reference details from earlier in your conversation. He is not a real therapist and should not be used for actual mental health guidance.
 
-10/24/26 Update: Changed underlying model to openai/gpt-oss-120b
-
-
 The purpose of this project was to:
 
 - have some fun learning about RAG systems
@@ -18,6 +15,7 @@ The purpose of this project was to:
 - learn about vector databases
 - utilize AI tools like Cursor to help support building this app
 
+10/24/26 Update: Changed underlying model to openai/gpt-oss-120b
 
 ## Data
 The [initial dataset](https://github.com/statzenthusiast921/bad_therapist/blob/main/scripts/question_answer_db.py) used in Pinecone was generated from a prompt I designed to create a list of 50 typical questions one would ask a therapist and 50 responses to those questions in character as a narcissistic therapist. 
