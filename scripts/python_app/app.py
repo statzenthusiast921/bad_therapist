@@ -1,6 +1,7 @@
 # app.py
 from dotenv import load_dotenv 
 load_dotenv()
+import os
 GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 
 import pandas as pd
@@ -9,7 +10,6 @@ from dash import dcc, html, callback, Input, Output, State, ctx, no_update
 import dash_bootstrap_components as dbc
 from session_manager import TherapistSessionManager
 from datetime import datetime
-import os
 import dash
 from bad_therapist_main import NarcissistTherapist
 from dash.exceptions import PreventUpdate
