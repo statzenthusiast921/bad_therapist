@@ -11,6 +11,7 @@ load_dotenv(override=True)
 PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 INDEX_NAME = "therapist-qa-index"
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 
 # Define the System Prompt
 SYSTEM_PROMPT = """
@@ -67,7 +68,7 @@ class NarcissistTherapist:
             print(f"Error connecting to Pinecone index: {e}")
             raise
 
-        print("--- Initialization Complete ---")
+        print("--- Initialization te ---")
 
     def _embed_text(self, text: str) -> List[float]:
         """Encodes text using Pinecone's cloud API instead of local RAM."""
@@ -109,9 +110,10 @@ class NarcissistTherapist:
 
         # 3. Call Groq
         completion = self.client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model=GROQ_MODEL,
             messages=messages,
-            temperature=1.2
+            temperature=1.2,
+            reasoning_effort="low",
         )
         bot_reply = completion.choices[0].message.content
             
