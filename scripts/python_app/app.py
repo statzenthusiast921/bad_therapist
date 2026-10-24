@@ -2,8 +2,7 @@
 from dotenv import load_dotenv 
 load_dotenv()
 import os
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
-
+from bad_therapist_main import NarcissistTherapist, GROQ_MODEL
 import pandas as pd
 import numpy as np
 from dash import dcc, html, callback, Input, Output, State, ctx, no_update
@@ -11,7 +10,6 @@ import dash_bootstrap_components as dbc
 from session_manager import TherapistSessionManager
 from datetime import datetime
 import dash
-from bad_therapist_main import NarcissistTherapist
 from dash.exceptions import PreventUpdate
 import random
 import re
@@ -22,6 +20,8 @@ from diagnosis_prompts import DIAGNOSIS_SYSTEM_PROMPT, format_conversation_histo
 
 # --- GLOBAL INITIALIZATION
 GLOBAL_SESSION_MANAGER = None
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+
 
 def get_session_manager():
     """Lazy initialization of the session manager."""
